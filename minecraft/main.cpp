@@ -7,21 +7,23 @@
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
 	glViewport(0, 0, width, height);
+	Context* context = (Context*)glfwGetWindowUserPointer(window);
+	if (context) context->framebufferSizeCallback(window, width, height);
 }
 void windowRefreshCallback(GLFWwindow* window) {
 	Context* context = (Context*)glfwGetWindowUserPointer(window);
-	if (context != NULL) {
+	if (context) {
 		context->render();
 		glfwSwapBuffers(window);
 	}
 }
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
 	Context* context = (Context*)glfwGetWindowUserPointer(window);
-	if (context != NULL) context->keyCallback(window, key, scancode, action, mods);
+	if (context) context->keyCallback(window, key, scancode, action, mods);
 }
 void cursorPosCallback(GLFWwindow* window, double xPos, double yPos) {
 	Context* context = (Context*)glfwGetWindowUserPointer(window);
-	if (context != NULL) context->cursorPosCallback(window, xPos, yPos);
+	if (context) context->cursorPosCallback(window, xPos, yPos);
 }
 void windowFocusCallback(GLFWwindow* window, int focused) {
 	if (focused)
@@ -32,7 +34,7 @@ void windowFocusCallback(GLFWwindow* window, int focused) {
 
 void pushContext(GLFWwindow* window, std::stack<Context*>& stack, Context* context) {
 	stack.push(context);
-	glfwSetWindowUserPointer(window, context);
+	glfwSetWindowUserPointer(context->window, context);
 }
 void popContext(GLFWwindow* window, std::stack<Context*>& stack) {
 	delete stack.top();
@@ -61,8 +63,8 @@ int main() {
 
 	// GLFW Settings
 	glfwSwapInterval(0); // Disable VSync
-	//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-	//glfwSetCursorPos(window, 0.0, 0.0); // Center cursor for camera movement
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetCursorPos(window, 0.0, 0.0); // Center cursor for camera movement
 
 	// GLFW Callbacks
 	glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
@@ -76,7 +78,7 @@ int main() {
 
 	// Create context
 	std::stack<Context*> contextStack;
-	pushContext(window, contextStack, new Game());
+	pushContext(window, contextStack, new Game(window));
 
 	// Timer
 	auto timerStart = std::chrono::steady_clock::now();

@@ -12,10 +12,10 @@ GLuint indices[] = {
 	0, 2, 3
 };
 
-Game::Game() {
+Game::Game(GLFWwindow* window) : Context(window) {
 	// Matrices
 	updateViewMat();
-	projMat = glm::perspective(glm::radians(player.fov), 16.0f/9.0f, 0.01f, 1000.0f);
+	updateProjMat();
 
 	// Shaders
 	prog = compileProgram(vsSourceTex, fsSourceTex);
@@ -73,20 +73,28 @@ void Game::render() {
 }
 
 void Game::update(float dt) {
-	// Move
-	if (player.move != glm::vec3(0.0f)) {
-		if (player.move.x != 0.0f) // Right
-			player.pos += glm::cross(player.dir, player.up) * (player.move.x * player.speed * dt);
-		if (player.move.y != 0.0f) // Up
-			player.pos += player.up * (player.move.y * player.speed * dt);
-		if (player.move.z != 0.0f) // Forward
-			player.pos += player.dir * (player.move.z * player.speed * dt);
+	// Position
+	glm::vec3 right = glm::vec3(cosf(player.rot.y), 0.0f, -sinf(player.rot.y)); // glm::cross(player.forward, player.up);
+	if (player.move.x != 0.0f) // Right
+		player.pos += right * (player.move.x * player.speed * dt);
+	if (player.move.y != 0.0f) // Up
+		player.pos += player.up * (player.move.y * player.speed * dt);
+	if (player.move.z != 0.0f) // Forward
+		player.pos += player.forward * (player.move.z * player.speed * dt);
 
-		updateViewMat();
-	}
+	// Rotation
+	player.forward = glm::vec3(
+		-sinf(player.rot.y) * cosf(player.rot.x),
+		sinf(player.rot.x),
+		-cosf(player.rot.y) * cosf(player.rot.x)
+	);
 
+	updateViewMat();
 }
 
+void Game::framebufferSizeCallback(GLFWwindow* window, int width, int height) {
+	updateProjMat();
+}
 void Game::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
 	switch (key) {
 	// UI
@@ -134,13 +142,30 @@ void Game::keyCallback(GLFWwindow* window, int key, int scancode, int action, in
 	}
 }
 void Game::cursorPosCallback(GLFWwindow* window, double xPos, double yPos) {
-	
+	player.rot.y -= (float)xPos * player.mouseSensitivity; // Yaw
+	player.rot.x -= (float)yPos * player.mouseSensitivity; // Pitch
+
+	// Constrain yaw to [0, 2*PI]
+	player.rot.y -= 2.0f * (float)M_PI * floorf(player.rot.y / (2.0f * (float)M_PI));
+
+	// Limit pitch to [-PI/2, PI/2]
+	if (player.rot.x > (float)M_PI_2)
+		player.rot.x = (float)M_PI_2;
+	if (player.rot.x < -(float)M_PI_2)
+		player.rot.x = -(float)M_PI_2;
+
+	glfwSetCursorPos(window, 0.0, 0.0);
 }
 
 void Game::updateViewMat() {
 	viewMat = glm::lookAt(
 		player.pos,
-		player.pos + player.dir,
+		player.pos + player.forward,
 		player.up
 	);
+}
+void Game::updateProjMat() {
+	int w, h;
+	glfwGetFramebufferSize(window, &w, &h);
+	projMat = glm::perspective(player.fov, (float)w / (float)h, 0.1f, 1000.0f);
 }
