@@ -25,8 +25,9 @@ const char* vsSourceTex = "\n\
 layout (location = 0) in vec3 aPos; \n\
 layout (location = 1) in vec2 aTexCoord; \n\
 out vec2 vTexCoord; \n\
+uniform mat4 uPVM; \n\
 void main() { \n\
-	gl_Position = vec4(aPos, 1.0f); \n\
+	gl_Position = uPVM * vec4(aPos, 1.0f); \n\
 	vTexCoord = aTexCoord; \n\
 } \n\
 ";

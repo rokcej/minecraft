@@ -13,8 +13,14 @@ GLuint indices[] = {
 };
 
 Game::Game() {
+	// Matrices
+	updateViewMat();
+	projMat = glm::perspective(glm::radians(player.fov), 16.0f/9.0f, 0.01f, 1000.0f);
+
+	// Shaders
 	prog = compileProgram(vsSourceTex, fsSourceTex);
 
+	// Objects
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
 
@@ -61,21 +67,80 @@ void Game::render() {
 	glUseProgram(prog);
 	glBindVertexArray(vao);
 	glUniform1i(glGetUniformLocation(prog, "uTex"), 0);
+	glm::mat4 pvmMat = projMat * viewMat;
+	glUniformMatrix4fv(glGetUniformLocation(prog, "uPVM"), 1, GL_FALSE, glm::value_ptr(pvmMat));
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
 
 void Game::update(float dt) {
-	
+	// Move
+	if (player.move != glm::vec3(0.0f)) {
+		if (player.move.x != 0.0f) // Right
+			player.pos += glm::cross(player.dir, player.up) * (player.move.x * player.speed * dt);
+		if (player.move.y != 0.0f) // Up
+			player.pos += player.up * (player.move.y * player.speed * dt);
+		if (player.move.z != 0.0f) // Forward
+			player.pos += player.dir * (player.move.z * player.speed * dt);
+
+		updateViewMat();
+	}
+
 }
 
 void Game::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
 	switch (key) {
+	// UI
 	case GLFW_KEY_ESCAPE:
 		if (action == GLFW_PRESS)
 			this->close = true;
+		break;
+	// Movement
+	case GLFW_KEY_D: // Right
+		if (action == GLFW_PRESS)
+			player.move.x += 1;
+		else if (action == GLFW_RELEASE)
+			player.move.x -= 1;
+		break;
+	case GLFW_KEY_A: // Left
+		if (action == GLFW_PRESS)
+			player.move.x -= 1;
+		else if (action == GLFW_RELEASE)
+			player.move.x += 1;
+		break;
+	case GLFW_KEY_SPACE: // Up
+		if (action == GLFW_PRESS)
+			player.move.y += 1;
+		else if (action == GLFW_RELEASE)
+			player.move.y -= 1;
+		break;
+	case GLFW_KEY_LEFT_CONTROL: // Down
+		if (action == GLFW_PRESS)
+			player.move.y -= 1;
+		else if (action == GLFW_RELEASE)
+			player.move.y += 1;
+		break;
+	case GLFW_KEY_W: // Forward
+		if (action == GLFW_PRESS)
+			player.move.z += 1;
+		else if (action == GLFW_RELEASE)
+			player.move.z -= 1;
+		break;
+	case GLFW_KEY_S: // Backward
+		if (action == GLFW_PRESS)
+			player.move.z -= 1;
+		else if (action == GLFW_RELEASE)
+			player.move.z += 1;
 		break;
 	}
 }
 void Game::cursorPosCallback(GLFWwindow* window, double xPos, double yPos) {
 	
+}
+
+void Game::updateViewMat() {
+	viewMat = glm::lookAt(
+		player.pos,
+		player.pos + player.dir,
+		player.up
+	);
 }
