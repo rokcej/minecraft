@@ -146,12 +146,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="block_data.cpp" />
+    <ClCompile Include="chunk.cpp" />
     <ClCompile Include="game.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="png_reader.cpp" />
     <ClCompile Include="shaders.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="block_data.h" />
+    <ClInclude Include="chunk.h" />
     <ClInclude Include="context.h" />
     <ClInclude Include="game.h" />
     <ClInclude Include="player.h" />

@@ -8,9 +8,9 @@ class Player {
 public:
 	float fov = (float)M_PI / 3.0f;
 	float mouseSensitivity = 0.001f;
-	float speed = 1.0f;
+	float speed = 3 * 1.5f;
 
-	glm::vec3 pos{ 0.0f, 0.0f, 3.0f }; // x, y, z
+	glm::vec3 pos{ 0.0f, 0.0f, 20.0f }; // x, y, z
 	glm::vec2 rot{ 0.0f, 0.0f }; // yaw, pitch
 
 	glm::vec3 forward{ 0.0f, 0.0f, -1.0f };

@@ -45,15 +45,25 @@ void popContext(GLFWwindow* window, std::stack<Context*>& stack) {
 		glfwSetWindowUserPointer(window, stack.top());
 }
 
+void centerWindow(GLFWwindow* window) {
+	const GLFWvidmode* vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+	int windowWidth, windowHeight;
+	glfwGetWindowSize(window, &windowWidth, &windowHeight);
+	glfwSetWindowPos(window, (vidmode->width - windowWidth) * 0.5, (vidmode->height - windowHeight) * 0.5);
+}
+
 int main() {
 	// Init GLFW
 	if (!glfwInit())
 		return -1;
-	GLFWwindow* window = glfwCreateWindow(1280, 720, "Minecraft", NULL, NULL);
+
+	// Create window
+	GLFWwindow* window = glfwCreateWindow(1600, 900, "Minecraft", NULL, NULL);
 	if (!window) {
 		glfwTerminate();
 		return -1;
 	}
+	centerWindow(window);
 	glfwMakeContextCurrent(window);
 
 	// Init GLEW
@@ -74,7 +84,10 @@ int main() {
 	//glfwSetWindowFocusCallback(window, windowFocusCallback);
 
 	// OpenGL flags
-	//glEnable(GL_DEPTH_TEST);
+	glEnable(GL_DEPTH_TEST);
+	//glEnable(GL_CULL_FACE);
+	//glEnable(GL_BLEND);
+	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	// Create context
 	std::stack<Context*> contextStack;

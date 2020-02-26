@@ -5,7 +5,6 @@
 #include <iostream>
 #include <stdlib.h>
 #include <stdint.h>
-#include <png.h>
 
 uint8_t* read_png(const char* filename, int* w, int* h);
 uint8_t* read_png(const char* filename, int* w, int* h, bool flip_vertically);

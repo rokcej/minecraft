@@ -1,5 +1,7 @@
 #include "png_reader.h"
 
+#include <png.h>
+
 uint8_t* read_png(const char* filename, int* w, int* h) {
 	return read_png(filename, w, h, false);
 }

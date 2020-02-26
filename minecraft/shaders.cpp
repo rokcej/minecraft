@@ -1,5 +1,7 @@
 #include "shaders.h"
 
+#include <iostream>
+
 const char* vsSource = "\n\
 #version 450 core \n\
 layout (location = 0) in vec3 aPos; \n\

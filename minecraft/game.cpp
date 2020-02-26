@@ -1,18 +1,17 @@
 #include "game.h"
 
-GLfloat vertices[] = {
-	-0.5f, +0.5f, 0.0f,	0.0f, 1.0f, // Top left
-	-0.5f, -0.5f, 0.0f,	0.0f, 0.0f, // Bottom left
-	+0.5f, -0.5f, 0.0f,	1.0f, 0.0f, // Bottom right
-	+0.5f, +0.5f, 0.0f,	1.0f, 1.0f  // Top right
-};
+#define _USE_MATH_DEFINES
+#include <math.h>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include "shaders.h"
+#include "png_reader.h"
+#include "block_data.h"
 
-GLuint indices[] = {
-	0, 1, 2,
-	0, 2, 3
-};
+Game::Game(GLFWwindow* window) : Context(window), chunk(0, 0, 0) {
+	// Block types
+	initBlockData();
 
-Game::Game(GLFWwindow* window) : Context(window) {
 	// Matrices
 	updateViewMat();
 	updateProjMat();
@@ -20,37 +19,17 @@ Game::Game(GLFWwindow* window) : Context(window) {
 	// Shaders
 	prog = compileProgram(vsSourceTex, fsSourceTex);
 
-	// Objects
-	glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
-
-	glGenBuffers(1, &vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-	glGenBuffers(1, &ebo);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)0);
-
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
-
+	// Textures
 	int w, h;
-	GLubyte* image = read_png("data/stone.png", &w, &h, true);
+	GLubyte* image = read_png("data/textures.png", &w, &h, true);
 
 	glGenTextures(1, &tex);
 	glBindTexture(GL_TEXTURE_2D, tex);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
 
 	free_png(image);
-
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
 }
 
 Game::~Game() {
@@ -58,18 +37,18 @@ Game::~Game() {
 }
 
 void Game::render() {
-	glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, tex);
 
 	glUseProgram(prog);
-	glBindVertexArray(vao);
+	glBindVertexArray(chunk.vao);
 	glUniform1i(glGetUniformLocation(prog, "uTex"), 0);
 	glm::mat4 pvmMat = projMat * viewMat;
 	glUniformMatrix4fv(glGetUniformLocation(prog, "uPVM"), 1, GL_FALSE, glm::value_ptr(pvmMat));
-	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+	glDrawElements(GL_TRIANGLES, chunk.n_indices, GL_UNSIGNED_INT, 0);
 }
 
 void Game::update(float dt) {
