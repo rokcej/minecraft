@@ -4,6 +4,7 @@
 #include "context.h"
 #include "player.h"
 #include "chunk.h"
+#include "chunk_manager.h"
 
 class Game : public Context {
 private:
@@ -11,7 +12,7 @@ private:
 	GLuint tex;
 	glm::mat4 projMat, viewMat;
 	Player player;
-	Chunk chunk;
+	ChunkManager chunkManager;
 public:
 	Game(GLFWwindow* window);
 	~Game();

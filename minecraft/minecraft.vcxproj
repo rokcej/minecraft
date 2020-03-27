@@ -148,6 +148,7 @@
   <ItemGroup>
     <ClCompile Include="block_data.cpp" />
     <ClCompile Include="chunk.cpp" />
+    <ClCompile Include="chunk_manager.cpp" />
     <ClCompile Include="game.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="png_reader.cpp" />
@@ -156,6 +157,7 @@
   <ItemGroup>
     <ClInclude Include="block_data.h" />
     <ClInclude Include="chunk.h" />
+    <ClInclude Include="chunk_manager.h" />
     <ClInclude Include="context.h" />
     <ClInclude Include="game.h" />
     <ClInclude Include="player.h" />

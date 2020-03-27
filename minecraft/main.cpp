@@ -1,9 +1,14 @@
 #include <iostream>
+#include <string.h>
 #include <stack>
 #include <chrono>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include "game.h"
+
+#define WINDOW_TITLE "Minecraft"
+#define WINDOW_WIDTH 1600
+#define WINDOW_HEIGHT 900
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
 	glViewport(0, 0, width, height);
@@ -49,7 +54,7 @@ void centerWindow(GLFWwindow* window) {
 	const GLFWvidmode* vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 	int windowWidth, windowHeight;
 	glfwGetWindowSize(window, &windowWidth, &windowHeight);
-	glfwSetWindowPos(window, (vidmode->width - windowWidth) * 0.5, (vidmode->height - windowHeight) * 0.5);
+	glfwSetWindowPos(window, (vidmode->width - windowWidth) / 2, (vidmode->height - windowHeight) / 2);
 }
 
 int main() {
@@ -58,7 +63,7 @@ int main() {
 		return -1;
 
 	// Create window
-	GLFWwindow* window = glfwCreateWindow(1600, 900, "Minecraft", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE, NULL, NULL);
 	if (!window) {
 		glfwTerminate();
 		return -1;
@@ -104,11 +109,14 @@ int main() {
 		auto timerNow = std::chrono::steady_clock::now();
 		float dt = std::chrono::duration<float>(timerNow - timerPrev).count(); // Time elapsed since last frame
 		float t = std::chrono::duration<float>(timerNow - timerStart).count(); // Total time elapsed
-		float fps_t = std::chrono::duration<float>(timerNow - timerFps).count();
+		float t_fps = std::chrono::duration<float>(timerNow - timerFps).count(); // Time elapsed since last FPS calculation
 		timerPrev = timerNow;
-		if (fps_t >= 1.0f) {
-			float fps = frameCount / fps_t;
-			std::cout << "FPS: " << fps << std::endl;
+
+		if (t_fps >= 1.0f) {
+			float fps = (float)frameCount / t_fps;
+			char title[64];
+			snprintf(title, sizeof(title), WINDOW_TITLE " (%.0f FPS)", fps);
+			glfwSetWindowTitle(window, title);
 			frameCount = 0;
 			timerFps = timerNow;
 		}
