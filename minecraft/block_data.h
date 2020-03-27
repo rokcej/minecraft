@@ -10,14 +10,14 @@
 
 class BlockData {
 public:
-	// Texture coordinates
-	float uSide, vSide;
-	float uTop, vTop;
-	float uBot, vBot;
+	// Block textures
+	float sideTextureIndex;
+	float topTextureIndex;
+	float botTextureIndex;
 
 	BlockData();
-	BlockData(int xTex, int yTex);
-	BlockData(int xSide, int ySide, int xTop, int yTop, int xBot, int yBot);
+	BlockData(int row, int col);
+	BlockData(int rowSide, int colSide, int rowTop, int colTop, int rowBot, int colBot);
 };
 
 extern BlockData blockData[256];

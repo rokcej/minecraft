@@ -76,12 +76,18 @@ int main() {
 		return -1;
 	}
 
-	// GLFW Settings
+	// Print versions
+	std::cout << "OpenGL version:\t" << glGetString(GL_VERSION) << std::endl;
+	std::cout << "GLEW version:\t" << glewGetString(GLEW_VERSION) << std::endl;
+	std::cout << "GLFW version:\t" << glfwGetVersionString() << std::endl;
+	std::cout << std::endl;
+
+	// GLFW settings
 	glfwSwapInterval(0); // Disable VSync
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glfwSetCursorPos(window, 0.0, 0.0); // Center cursor for camera movement
 
-	// GLFW Callbacks
+	// GLFW callbacks
 	glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
 	glfwSetWindowRefreshCallback(window, windowRefreshCallback);
 	glfwSetKeyCallback(window, keyCallback);

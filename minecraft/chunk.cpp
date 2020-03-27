@@ -12,48 +12,45 @@
 
 GLfloat blockVertices[] = { // Block vertices
 	// Left
-	0.0f, 0.0f, 0.0f,	//0.0f, 0.0f,
-	0.0f, 0.0f, 1.0f,	//1.0f, 0.0f,
-	0.0f, 1.0f, 1.0f,	//1.0f, 1.0f,
-	0.0f, 1.0f, 0.0f,	//0.0f, 1.0f,
+	0.0f, 0.0f, 0.0f,
+	0.0f, 0.0f, 1.0f,
+	0.0f, 1.0f, 1.0f,
+	0.0f, 1.0f, 0.0f,
 	// Right
-	1.0f, 0.0f, 1.0f,	//0.0f, 0.0f,
-	1.0f, 0.0f, 0.0f,	//1.0f, 0.0f,
-	1.0f, 1.0f, 0.0f,	//1.0f, 1.0f,
-	1.0f, 1.0f, 1.0f,	//0.0f, 1.0f,
+	1.0f, 0.0f, 1.0f,
+	1.0f, 0.0f, 0.0f,
+	1.0f, 1.0f, 0.0f,
+	1.0f, 1.0f, 1.0f,
 	// Bottom
-	1.0f, 0.0f, 1.0f,	//0.0f, 0.0f,
-	0.0f, 0.0f, 1.0f,	//1.0f, 0.0f,
-	0.0f, 0.0f, 0.0f,	//1.0f, 1.0f,
-	1.0f, 0.0f, 0.0f,	//0.0f, 1.0f,
+	1.0f, 0.0f, 1.0f,
+	0.0f, 0.0f, 1.0f,
+	0.0f, 0.0f, 0.0f,
+	1.0f, 0.0f, 0.0f,
 	// Top
-	0.0f, 1.0f, 1.0f,	//0.0f, 0.0f,
-	1.0f, 1.0f, 1.0f,	//1.0f, 0.0f,
-	1.0f, 1.0f, 0.0f,	//1.0f, 1.0f,
-	0.0f, 1.0f, 0.0f,	//0.0f, 1.0f,
+	0.0f, 1.0f, 1.0f,
+	1.0f, 1.0f, 1.0f,
+	1.0f, 1.0f, 0.0f,
+	0.0f, 1.0f, 0.0f,
 	// Back
-	1.0f, 0.0f, 0.0f,	//0.0f, 0.0f,
-	0.0f, 0.0f, 0.0f,	//1.0f, 0.0f,
-	0.0f, 1.0f, 0.0f,	//1.0f, 1.0f,
-	1.0f, 1.0f, 0.0f,	//0.0f, 1.0f,
+	1.0f, 0.0f, 0.0f,
+	0.0f, 0.0f, 0.0f,
+	0.0f, 1.0f, 0.0f,
+	1.0f, 1.0f, 0.0f,
 	// Front
-	0.0f, 0.0f, 1.0f,	//0.0f, 0.0f,
-	1.0f, 0.0f, 1.0f,	//1.0f, 0.0f,
-	1.0f, 1.0f, 1.0f,	//1.0f, 1.0f,
-	0.0f, 1.0f, 1.0f,	//0.0f, 1.0f,
+	0.0f, 0.0f, 1.0f,
+	1.0f, 0.0f, 1.0f,
+	1.0f, 1.0f, 1.0f,
+	0.0f, 1.0f, 1.0f,
 };
 
-GLfloat uvOffset = 0.0001f; // To prevent texture bleeding
-GLfloat blockU0 = 0.0f + uvOffset, blockU1 = 1.0f / 16.0f - uvOffset;
-GLfloat blockV0 = 1.0f - 1.0f / TEXTURE_ATLAS_HEIGHT + uvOffset, blockV1 = 1.0f - uvOffset;
-GLfloat blockUV[] = { // Block face texture coordinates
-	blockU0, blockV0,
-	blockU1, blockV0,
-	blockU1, blockV1,
-	blockU0, blockV1
+GLfloat faceTextureCoordinates[] = { // Block face texture coordinates
+	0.f, 0.f, // Bottom left
+	1.f, 0.f, // Bottom right
+	1.f, 1.f, // Top right
+	0.f, 1.f  // Top left
 };
 
-GLuint blockIndices[] = {
+GLuint faceIndices[] = {
 	0, 1, 2,	0, 2, 3, // Block face indices
 };
 
@@ -74,10 +71,10 @@ Chunk::Chunk(int x, int y, int z) : pos{ x, y, z } {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)0);
 
 	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
 
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -149,16 +146,13 @@ void Chunk::generateMesh() {
 
 				if (neighborType == BLOCK_AIR) {
 					// Texture coordinates
-					float u, v;
+					float texIndex;
 					if (side == SIDE_TOP) {
-						u = blockData[blockType].uTop;
-						v = blockData[blockType].vTop;
+						texIndex = blockData[blockType].topTextureIndex;
 					} else if (side == SIDE_BOT) {
-						u = blockData[blockType].uBot;
-						v = blockData[blockType].vBot;
+						texIndex = blockData[blockType].botTextureIndex;
 					} else {
-						u = blockData[blockType].uSide;
-						v = blockData[blockType].vSide;
+						texIndex = blockData[blockType].sideTextureIndex;
 					}
 
 					// Add vertices
@@ -166,12 +160,13 @@ void Chunk::generateMesh() {
 						vertices.push_back(blockVertices[12 * side + 3 * j + 0] + x_offset);
 						vertices.push_back(blockVertices[12 * side + 3 * j + 1] + y_offset);
 						vertices.push_back(blockVertices[12 * side + 3 * j + 2] + z_offset);
-						vertices.push_back(blockUV[2 * j + 0] + u);
-						vertices.push_back(blockUV[2 * j + 1] - v);
+						vertices.push_back(faceTextureCoordinates[2 * j + 0]);
+						vertices.push_back(faceTextureCoordinates[2 * j + 1]);
+						vertices.push_back(texIndex);
 					}
 					// Add indices
 					for (int j = 0; j < 6; ++j) {
-						indices.push_back(blockIndices[j] + index_offset);
+						indices.push_back(faceIndices[j] + index_offset);
 					}
 					index_offset += 4;
 				}

@@ -5,8 +5,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include "shaders.h"
-#include "png_reader.h"
-#include "block_data.h"
+#include "texture_loader.h"
 
 constexpr float HALF_PI_LESS = ((float)M_PI_2 * 0.999f);
 
@@ -19,28 +18,11 @@ Game::Game(GLFWwindow* window) : Context(window), chunkManager() {
 	prog = compileProgram(vsSourceTex, fsSourceTex);
 
 	// Textures
-	int w, h;
-	GLubyte* image = read_png("data/textures.png", &w, &h, true);
-
-	glGenTextures(1, &tex);
-	glBindTexture(GL_TEXTURE_2D, tex);
-	// Mipmaps
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 4);
-	// Anisotropic filtering
-	/*GLfloat maxAnisotropy;
-	glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &maxAnisotropy);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, 2.f);*/
-
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
-	glGenerateMipmap(GL_TEXTURE_2D);
-
-	free_png(image);
+	tex = TextureLoader::loadTextureAtlas("textures.png");
 }
 
 Game::~Game() {
-	
+	// TODO: Delete chunks, textures, programs, etc.
 }
 
 void Game::render() {
@@ -48,14 +30,12 @@ void Game::render() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, tex);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, tex);
 
 	glUseProgram(prog);
-	//glBindVertexArray(chunk.vao);
 	glUniform1i(glGetUniformLocation(prog, "uTex"), 0);
 	glm::mat4 pvmMat = projMat * viewMat;
 	glUniformMatrix4fv(glGetUniformLocation(prog, "uPVM"), 1, GL_FALSE, glm::value_ptr(pvmMat));
-	//glDrawElements(GL_TRIANGLES, chunk.n_indices, GL_UNSIGNED_INT, 0);
 
 	for (auto it = chunkManager.chunks.begin(); it != chunkManager.chunks.end(); ++it) {
 		glBindVertexArray(it->second->vao);
@@ -90,35 +70,63 @@ void Game::framebufferSizeCallback(GLFWwindow* window, int width, int height) {
 void Game::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
 	switch (key) {
 	// Debugging
-	/// Mipmap filtering
+	/// Filtering
 	case GLFW_KEY_N:
-		if (action == GLFW_PRESS)
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+		if (action == GLFW_PRESS) {
+			if (mods & GLFW_MOD_SHIFT)
+				glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			else
+				glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+		}
 		break;
 	case GLFW_KEY_L:
-		if (action == GLFW_PRESS)
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
+		if (action == GLFW_PRESS) {
+			if (mods & GLFW_MOD_SHIFT)
+				glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			else
+				glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
+		}
 		break;
-	/// Mipmap level
+	/// Mipmap level and anisotropic filtering level
 	case GLFW_KEY_0:
-		if (action == GLFW_PRESS)
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+		if (action == GLFW_PRESS) {
+			if (mods & GLFW_MOD_SHIFT)
+				glTexParameterf(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_ANISOTROPY, 1.f);
+			else
+				glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_LEVEL, 0);
+		}
 		break;
 	case GLFW_KEY_1:
-		if (action == GLFW_PRESS)
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 1);
+		if (action == GLFW_PRESS) {
+			if (mods & GLFW_MOD_SHIFT)
+				glTexParameterf(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_ANISOTROPY, 2.f);
+			else
+				glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_LEVEL, 1);
+		}
 		break;
 	case GLFW_KEY_2:
-		if (action == GLFW_PRESS)
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 2);
+		if (action == GLFW_PRESS) {
+			if (mods & GLFW_MOD_SHIFT)
+				glTexParameterf(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_ANISOTROPY, 4.f);
+			else
+				glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_LEVEL, 2);
+		}
 		break;
 	case GLFW_KEY_3:
-		if (action == GLFW_PRESS)
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 3);
+		if (action == GLFW_PRESS) {
+			if (mods & GLFW_MOD_SHIFT)
+				glTexParameterf(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_ANISOTROPY, 8.f);
+			else
+				glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_LEVEL, 3);
+		}
 		break;
 	case GLFW_KEY_4:
-		if (action == GLFW_PRESS)
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 4);
+		if (action == GLFW_PRESS) {
+			if (mods & GLFW_MOD_SHIFT)
+				glTexParameterf(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_ANISOTROPY, 16.f);
+			else
+				glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_LEVEL, 4);
+		}
 		break;
 
 	// UI

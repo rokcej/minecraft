@@ -25,8 +25,8 @@ void main() { \n\
 const char* vsSourceTex = "\n\
 #version 450 core \n\
 layout (location = 0) in vec3 aPos; \n\
-layout (location = 1) in vec2 aTexCoord; \n\
-out vec2 vTexCoord; \n\
+layout (location = 1) in vec3 aTexCoord; \n\
+out vec3 vTexCoord; \n\
 uniform mat4 uPVM; \n\
 void main() { \n\
 	gl_Position = uPVM * vec4(aPos, 1.0f); \n\
@@ -36,9 +36,9 @@ void main() { \n\
 
 const char* fsSourceTex = "\n\
 #version 450 core \n\
-in vec2 vTexCoord; \n\
+in vec3 vTexCoord; \n\
 out vec4 oColor; \n\
-uniform sampler2D uTex; \n\
+uniform sampler2DArray uTex; \n\
 void main() { \n\
 	oColor = texture(uTex, vTexCoord); \n\
 } \n\
