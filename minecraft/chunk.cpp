@@ -1,6 +1,7 @@
 #include "chunk.h"
 
 #include <iostream>
+#include <math.h>
 #include "block_data.h"
 
 #define SIDE_LEFT 0
@@ -79,11 +80,10 @@ Chunk::Chunk(int x, int y, int z) : pos{ x, y, z } {
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-	generateData();
 }
 
 Chunk::~Chunk() {
+	// Unlink neighbors
 	for (int side = 0; side < 6; ++side) {
 		if (neighbors[side] != nullptr) {
 			int side2 = (side % 2 == 0) ? side + 1 : side - 1;
@@ -91,6 +91,12 @@ Chunk::~Chunk() {
 			neighbors[side] = nullptr;
 		}
 	}
+	// Delete data
+	vertices.clear();
+	indices.clear();
+	glDeleteBuffers(1, &vbo);
+	glDeleteBuffers(1, &ebo);
+	glDeleteVertexArrays(1, &vao);
 }
 
 void Chunk::generateData() {
@@ -175,6 +181,8 @@ void Chunk::generateMesh() {
 	}
 	}
 	}
+
+	meshGenerated = true;
 }
 
 void Chunk::loadMesh() {
@@ -189,4 +197,14 @@ void Chunk::loadMesh() {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 	n_indices = (unsigned int)indices.size();
+
+	meshLoaded = true;
+}
+
+glm::ivec3 blockToChunkPos(glm::vec3 blockPos) {
+	return glm::ivec3(
+		(int)floorf(blockPos.x / (float)CHUNK_SIZE),
+		(int)floorf(blockPos.y / (float)CHUNK_SIZE),
+		(int)floorf(blockPos.z / (float)CHUNK_SIZE)
+	);
 }

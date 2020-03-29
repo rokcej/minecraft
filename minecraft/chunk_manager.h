@@ -12,15 +12,21 @@ struct ivec3Hash {
     }
 };
 
+using ChunkMap = std::unordered_map<glm::ivec3, Chunk*, ivec3Hash>;
 
 class ChunkManager {
 public:
-    int renderDistance = 4;
-
-    std::unordered_map<glm::ivec3, Chunk*, ivec3Hash> chunks;
+    int renderDistance = 10;
+    ChunkMap chunks;
+    glm::ivec3 lastChunkPos;
 
     ChunkManager();
 
+    void update(glm::vec3 blockPos);
+
     Chunk* getChunk(int x, int y, int z);
-    void createChunk(int x, int y, int z);
+    Chunk* createChunk(int x, int y, int z);
+    void deleteChunk(ChunkMap::iterator it);
+
+    bool isInRenderDistance(glm::ivec3 target, glm::ivec3 pos, int padding);
 };

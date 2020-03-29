@@ -37,9 +37,17 @@ void Game::render() {
 	glm::mat4 pvmMat = projMat * viewMat;
 	glUniformMatrix4fv(glGetUniformLocation(prog, "uPVM"), 1, GL_FALSE, glm::value_ptr(pvmMat));
 
-	for (auto it = chunkManager.chunks.begin(); it != chunkManager.chunks.end(); ++it) {
-		glBindVertexArray(it->second->vao);
-		glDrawElements(GL_TRIANGLES, it->second->n_indices, GL_UNSIGNED_INT, 0);
+	glm::ivec3 chunkPos = chunkManager.lastChunkPos;
+	for (int x = chunkPos.x - chunkManager.renderDistance; x <= chunkPos.x + chunkManager.renderDistance; ++x) {
+		for (int y = chunkPos.y - chunkManager.renderDistance; y <= chunkPos.y + chunkManager.renderDistance; ++y) {
+			for (int z = chunkPos.z - chunkManager.renderDistance; z <= chunkPos.z + chunkManager.renderDistance; ++z) {
+				Chunk* c = chunkManager.getChunk(x, y, z);
+				if (c != nullptr && c->meshLoaded && c->n_indices > 0) {
+					glBindVertexArray(c->vao);
+					glDrawElements(GL_TRIANGLES, c->n_indices, GL_UNSIGNED_INT, 0);
+				}
+			}
+		}
 	}
 }
 
@@ -62,6 +70,9 @@ void Game::update(float dt) {
 	);
 
 	updateViewMat();
+
+	// Chunks
+	chunkManager.update(player.pos);
 }
 
 void Game::framebufferSizeCallback(GLFWwindow* window, int width, int height) {

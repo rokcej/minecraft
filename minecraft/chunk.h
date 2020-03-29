@@ -22,12 +22,16 @@ public:
 	std::vector<GLuint> indices;
 	unsigned int n_indices = 0;
 
+	bool meshGenerated = false;
+	bool meshLoaded = false;
+
 	Chunk(int x, int y, int z);
 	~Chunk();
 
 	void generateMesh(); // Generates mesh from data
 	void loadMesh(); // Loads mesh onto GPU
 
-private:
 	void generateData();
 };
+
+glm::ivec3 blockToChunkPos(glm::vec3 blockPos);
