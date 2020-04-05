@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <atomic>
 #include <stdint.h>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -9,7 +10,7 @@
 #define CHUNK_SIZE 16
 #define CHUNK_VOLUME (CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE)
 
-int neighborsIndices[];
+extern const int neighborsIndices[];
 
 class Chunk {
 public:
@@ -22,16 +23,20 @@ public:
 	std::vector<GLuint> indices;
 	unsigned int n_indices = 0;
 
-	bool meshGenerated = false;
-	bool meshLoaded = false;
+	std::atomic<bool> dataGenerated = false;
+	std::atomic<bool> meshGenerated = false;
+	std::atomic<bool> meshLoaded = false;
+
+	std::atomic<bool> isLoaded = false;
 
 	Chunk(int x, int y, int z);
 	~Chunk();
 
+	bool hasAllNeighbors();
+
+	void generateData(); // Generates chunk data
 	void generateMesh(); // Generates mesh from data
 	void loadMesh(); // Loads mesh onto GPU
-
-	void generateData();
 };
 
 glm::ivec3 blockToChunkPos(glm::vec3 blockPos);

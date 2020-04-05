@@ -2,81 +2,42 @@
 
 #define _USE_MATH_DEFINES
 #include <math.h>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include "shaders.h"
-#include "texture_loader.h"
 
 constexpr float HALF_PI_LESS = ((float)M_PI_2 * 0.999f);
 
-Game::Game(GLFWwindow* window) : Context(window), chunkManager() {
-	// Matrices
-	updateViewMat();
-	updateProjMat();
-
-	// Shaders
-	prog = compileProgram(vsSourceTex, fsSourceTex);
-
-	// Textures
-	tex = TextureLoader::loadTextureAtlas("textures.png");
+Game::Game(GLFWwindow* window) :
+	Context(window),
+	chunkManager(),
+	chunkRenderer(),
+	camera(&player)
+{
+	// Camera
+	camera.updateProjMat(this->getAspectRatio());
 }
 
 Game::~Game() {
-	// TODO: Delete chunks, textures, programs, etc.
+
 }
 
 void Game::render() {
 	glClearColor(0.f, 0.f, 0.f, 1.f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D_ARRAY, tex);
-
-	glUseProgram(prog);
-	glUniform1i(glGetUniformLocation(prog, "uTex"), 0);
-	glm::mat4 pvmMat = projMat * viewMat;
-	glUniformMatrix4fv(glGetUniformLocation(prog, "uPVM"), 1, GL_FALSE, glm::value_ptr(pvmMat));
-
-	glm::ivec3 chunkPos = chunkManager.lastChunkPos;
-	for (int x = chunkPos.x - chunkManager.renderDistance; x <= chunkPos.x + chunkManager.renderDistance; ++x) {
-		for (int y = chunkPos.y - chunkManager.renderDistance; y <= chunkPos.y + chunkManager.renderDistance; ++y) {
-			for (int z = chunkPos.z - chunkManager.renderDistance; z <= chunkPos.z + chunkManager.renderDistance; ++z) {
-				Chunk* c = chunkManager.getChunk(x, y, z);
-				if (c != nullptr && c->meshLoaded && c->n_indices > 0) {
-					glBindVertexArray(c->vao);
-					glDrawElements(GL_TRIANGLES, c->n_indices, GL_UNSIGNED_INT, 0);
-				}
-			}
-		}
-	}
+	chunkRenderer.render(&camera, &chunkManager);
 }
 
 void Game::update(float dt) {
-	// Position
-	if (player.move.x != 0.0f) { // Right
-		glm::vec3 right = glm::vec3(cosf(player.rot.y), 0.0f, -sinf(player.rot.y)); // glm::cross(player.forward, player.up);
-		player.pos += right * (player.move.x * player.speed * dt);
-	}
-	if (player.move.y != 0.0f) // Up
-		player.pos += player.up * (player.move.y * player.speed * dt);
-	if (player.move.z != 0.0f) // Forward
-		player.pos += player.forward * (player.move.z * player.speed * dt);
-
-	// Rotation
-	player.forward = glm::vec3(
-		-sinf(player.rot.y) * cosf(player.rot.x),
-		sinf(player.rot.x),
-		-cosf(player.rot.y) * cosf(player.rot.x)
-	);
-
-	updateViewMat();
+	// Player and camera
+	player.update(dt);
+	camera.updateViewMat();
 
 	// Chunks
-	chunkManager.update(player.pos);
+	chunkManager.update(&camera);
 }
 
+// Callbacks
 void Game::framebufferSizeCallback(GLFWwindow* window, int width, int height) {
-	updateProjMat();
+	camera.updateProjMat((float)width / (float)height);
 }
 void Game::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
 	switch (key) {
@@ -192,8 +153,8 @@ void Game::keyCallback(GLFWwindow* window, int key, int scancode, int action, in
 	}
 }
 void Game::cursorPosCallback(GLFWwindow* window, double xPos, double yPos) {
-	player.rot.y -= (float)xPos * player.mouseSensitivity; // Yaw
-	player.rot.x -= (float)yPos * player.mouseSensitivity; // Pitch
+	player.rot.y -= (float)xPos * mouseSensitivity; // Yaw
+	player.rot.x -= (float)yPos * mouseSensitivity; // Pitch
 
 	// Constrain yaw to [0, 2*PI]
 	player.rot.y -= 2.0f * (float)M_PI * floorf(player.rot.y / (2.0f * (float)M_PI));
@@ -205,17 +166,4 @@ void Game::cursorPosCallback(GLFWwindow* window, double xPos, double yPos) {
 		player.rot.x = -HALF_PI_LESS;
 
 	glfwSetCursorPos(window, 0.0, 0.0);
-}
-
-void Game::updateViewMat() {
-	viewMat = glm::lookAt(
-		player.pos,
-		player.pos + player.forward,
-		player.up
-	);
-}
-void Game::updateProjMat() {
-	int w, h;
-	glfwGetFramebufferSize(window, &w, &h);
-	projMat = glm::perspective(player.fov, (float)w / (float)h, 0.1f, 1000.0f);
 }

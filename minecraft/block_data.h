@@ -20,6 +20,6 @@ public:
 	BlockData(int rowSide, int colSide, int rowTop, int colTop, int rowBot, int colBot);
 };
 
-extern BlockData blockData[256];
+extern BlockData blockData[TEXTURE_ATLAS_WIDTH * TEXTURE_ATLAS_HEIGHT];
 
 void initBlockData();

@@ -1,6 +1,5 @@
 #include "chunk.h"
 
-#include <iostream>
 #include <math.h>
 #include "block_data.h"
 
@@ -11,7 +10,7 @@
 #define SIDE_BACK 4
 #define SIDE_FRONT 5
 
-GLfloat blockVertices[] = { // Block vertices
+const GLfloat blockVertices[] = { // Block vertices
 	// Left
 	0.0f, 0.0f, 0.0f,
 	0.0f, 0.0f, 1.0f,
@@ -44,18 +43,18 @@ GLfloat blockVertices[] = { // Block vertices
 	0.0f, 1.0f, 1.0f,
 };
 
-GLfloat faceTextureCoordinates[] = { // Block face texture coordinates
+const GLfloat faceTextureCoordinates[] = { // Block face texture coordinates
 	0.f, 0.f, // Bottom left
 	1.f, 0.f, // Bottom right
 	1.f, 1.f, // Top right
 	0.f, 1.f  // Top left
 };
 
-GLuint faceIndices[] = {
+const GLuint faceIndices[] = {
 	0, 1, 2,	0, 2, 3, // Block face indices
 };
 
-int neighborsIndices[] = {
+const int neighborsIndices[] = {
 	-1, 0, 0, +1, 0, 0, // Left, right (-x, +x)
 	0, -1, 0, 0, +1, 0, // Bottom, top (-y, +y)
 	0, 0, -1, 0, 0, +1  // Back, front (-z, +z)
@@ -100,24 +99,35 @@ Chunk::~Chunk() {
 }
 
 void Chunk::generateData() {
+	/*if (dataGenerated)
+		std::cout << "ERROR: Data already generated" << std::endl;*/
+
 	for (int x = 0; x < CHUNK_SIZE; ++x) {
 	for (int y = 0; y < CHUNK_SIZE; ++y) {
 	for (int z = 0; z < CHUNK_SIZE; ++z) {
 		int height = pos.y * CHUNK_SIZE + y;
-		if (height == 48)
+		int maxHeight = 48 + pos.x + pos.z;
+		if (height == maxHeight)
 			data[z][y][x] = BLOCK_GRASS;
-		else if (height < 32)
+		else if (height < maxHeight - 16)
 			data[z][y][x] = BLOCK_STONE;
-		else if (height < 48)
+		else if (height < maxHeight)
 			data[z][y][x] = BLOCK_DIRT;
 		else
 			data[z][y][x] = BLOCK_AIR;
 	}
 	}
 	}
+
+	dataGenerated = true;
 }
 
 void Chunk::generateMesh() {
+	/*if (!dataGenerated)
+		std::cout << "ERROR: Data not generated yet" << std::endl;
+	if (meshGenerated)
+		std::cout << "ERROR: Mesh already generated" << std::endl;*/
+
 	vertices.clear();
 	indices.clear();
 
@@ -140,12 +150,14 @@ void Chunk::generateMesh() {
 
 				uint8_t neighborType = BLOCK_AIR;
 				if (xn < 0 || xn >= CHUNK_SIZE || yn < 0 || yn >= CHUNK_SIZE || zn < 0 || zn >= CHUNK_SIZE) {
-					if (neighbors[side] != nullptr) {
+					if (neighbors[side] != nullptr && neighbors[side]->dataGenerated) {
 						int xn2 = xn - neighborsIndices[3 * side + 0] * CHUNK_SIZE;
 						int yn2 = yn - neighborsIndices[3 * side + 1] * CHUNK_SIZE;
 						int zn2 = zn - neighborsIndices[3 * side + 2] * CHUNK_SIZE;
 						neighborType = neighbors[side]->data[zn2][yn2][xn2];
-					}
+					}/* else {
+						std::cout << "ERROR: Can't create mesh because neighbor data is missing" << std::endl;
+					}*/
 				} else {
 					neighborType = data[zn][yn][xn];
 				}
@@ -186,19 +198,36 @@ void Chunk::generateMesh() {
 }
 
 void Chunk::loadMesh() {
+	/*if (!meshGenerated)
+		std::cout << "ERROR: Mesh not generated yet" << std::endl;
+	if (meshLoaded)
+		std::cout << "ERROR: Mesh already loaded" << std::endl;*/
+
 	// Put vertices and indices in vbo and ebo
+	glBindVertexArray(vao);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+
 	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(GLfloat), vertices.data(), GL_STATIC_DRAW);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), indices.data(), GL_STATIC_DRAW);
 
+	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 	n_indices = (unsigned int)indices.size();
 
 	meshLoaded = true;
+}
+
+bool Chunk::hasAllNeighbors() {
+	for (int side = 0; side < 6; ++side) {
+		if (neighbors[side] == nullptr || !neighbors[side]->dataGenerated) {
+			return false;
+		}
+	}
+	return true;
 }
 
 glm::ivec3 blockToChunkPos(glm::vec3 blockPos) {

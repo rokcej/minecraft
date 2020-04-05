@@ -4,11 +4,9 @@ My attempt at recreating Minecraft.
 
 ## Configuration
 
-Make sure the project configuration is set to `x64 Release`.
+Make sure the project platform is set to `x64`.
 
 ## Dependencies
-
-All dependencies should be 64bit.
 
 | Dependency | Version | Description             |
 | ---------- | ------: | ----------------------- |
@@ -19,6 +17,6 @@ All dependencies should be 64bit.
 | zlib       | 1.2.11  | libpng dependency       |
 
 Visual Studio will look for dependencies in the following directories relative to the project:
-* `dependencies/bin/x64/` - Compiled binaries (`.dll`)
-* `dependencies/lib/x64/` - Library files (`.lib`)
+* `dependencies/bin/x64/[Debug | Release]` - Compiled binaries (`.dll`)
+* `dependencies/lib/x64/[Debug | Release]` - Library files (`.lib`)
 * `dependencies/include/` - Include files (`.h`/`.hpp`)

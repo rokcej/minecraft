@@ -1,56 +1,103 @@
 #include "chunk_manager.h"
 
+#include <iostream>
+#include <chrono>
 #include "block_data.h"
 
-ChunkManager::ChunkManager() {
-	initBlockData();
-
-	//for (int x = -renderDistance; x <= renderDistance; ++x) {
-	//	for (int y = -renderDistance; y <= renderDistance; ++y) {
-	//		for (int z = -renderDistance; z <= renderDistance; ++z) {
-	//			//chunks.emplace(glm::ivec3(x, y, z), Chunk(x, y, z));
-	//			createChunk(x, y, z);
-	//		}
-	//	}
-	//}
-
-	//for (auto it = chunks.begin(); it != chunks.end(); ++it) {
-	//	it->second->generateMesh();
-	//	it->second->loadMesh();
-	//}
+// Check if target is within Manhattan distance of pos
+inline bool isWithinDistance(const glm::ivec3& target, const glm::ivec3& pos, const int distance) {
+	return (
+		target.x >= pos.x - distance && target.x <= pos.x + distance &&
+		target.y >= pos.y - distance && target.y <= pos.y + distance &&
+		target.z >= pos.z - distance && target.z <= pos.z + distance
+	);
 }
 
-void ChunkManager::update(glm::vec3 blockPos) {
-	glm::ivec3 chunkPos = blockToChunkPos(blockPos);
-	if (chunkPos != lastChunkPos) {
-		// Generate
-		for (int x = chunkPos.x - renderDistance - 1; x <= chunkPos.x + renderDistance + 1; ++x) {
-			for (int y = chunkPos.y - renderDistance - 1; y <= chunkPos.y + renderDistance + 1; ++y) {
-				for (int z = chunkPos.z - renderDistance - 1; z <= chunkPos.z + renderDistance + 1; ++z) {
-					if (getChunk(x, y, z) == nullptr) {
-						Chunk* c = createChunk(x, y, z);
-						c->generateData();
+ChunkManager::ChunkManager() :
+	lastChunkPos(1 << 31) // Min integer value
+{
+	initBlockData();
+
+	// Spawn chunk loader thread
+	chunkLoaderIsRunning = true;
+	chunkLoaderThread = std::thread(chunkLoaderFunc, this);
+}
+
+ChunkManager::~ChunkManager() {
+	// Terminate chunk loader thread
+	std::unique_lock<std::mutex> mutexLock(chunkLoaderMutex);
+	chunkLoaderIsRunning = false;
+	chunkLoaderMutex.unlock();
+	chunkLoaderCondition.notify_all();
+	chunkLoaderThread.join();
+
+	// Delete chunks
+	for (auto it = chunks.begin(); it != chunks.end(); /* No increment */)
+		it = deleteChunk(it);
+}
+
+void ChunkManager::update(Camera* camera) {
+	glm::ivec3 chunkPos = blockToChunkPos(camera->entity->pos); // Current position in chunk coordinates
+
+	// Process existing chunks
+	for (auto it = chunks.begin(); it != chunks.end(); /* No increment */) {
+		Chunk* c = it->second;
+		if (c->isLoaded) { // Make sure chunk isn't being processed by secondary thread
+			if (isWithinDistance(c->pos, chunkPos, camera->renderDistance)) { // Chunk in render distance
+				// Load mesh
+				if (c->meshGenerated && !c->meshLoaded) {
+					c->loadMesh();
+				}
+			} else if (!isWithinDistance(c->pos, chunkPos, camera->renderDistance + 2)) { // Chunk outside render distance + 2
+				// Delete chunk if possible
+				bool safeToDelete = true;
+				for (int side = 0; side < 6; ++side) {
+					if (c->neighbors[side] != nullptr && !c->neighbors[side]->isLoaded) {
+						safeToDelete = false;
+						break;
+					}
+				}
+				if (safeToDelete) {
+					it = deleteChunk(it);
+					// Don't increment iterator
+					continue;
+				}
+			}
+		}
+		// Increment iterator
+		++it;
+	}
+
+	if (chunkPos != lastChunkPos || camera->renderDistance != lastRenderDistance) {
+		// Generate new chunks
+		int generateDistance = camera->renderDistance + 1;
+
+		// Put newly created chunks in shared queue
+		std::unique_lock<std::mutex> mutexLock(chunkLoaderMutex);
+
+		lastChunkPos = chunkPos;
+		lastRenderDistance = camera->renderDistance;
+
+		for (int x = chunkPos.x - generateDistance; x <= chunkPos.x + generateDistance; ++x) {
+			for (int y = chunkPos.y - generateDistance; y <= chunkPos.y + generateDistance; ++y) {
+				for (int z = chunkPos.z - generateDistance; z <= chunkPos.z + generateDistance; ++z) {
+					Chunk* c = getChunk(x, y, z);
+					if (c == nullptr) {
+						c = createChunk(x, y, z);
+						chunkLoaderQueue.push(c);
+					} else {
+						if (c->isLoaded && !c->meshGenerated && isWithinDistance(c->pos, chunkPos, camera->renderDistance)) {
+							c->isLoaded = false;
+							chunkLoaderQueue.push(c);
+						}
 					}
 				}
 			}
 		}
 
-		// Process
-		for (auto it = chunks.begin(); it != chunks.end(); ++it) {
-			Chunk* c = it->second;
-			if (isInRenderDistance(c->pos, chunkPos, 0)) { // Load
-				if (!c->meshGenerated)
-					c->generateMesh();
-				if (!c->meshLoaded)
-					c->loadMesh();
-			} else if (isInRenderDistance(c->pos, chunkPos, 1)) { // Update
-				// Nothing yet
-			} else { // Delete
-				deleteChunk(it);
-			}
-		}
-
-		lastChunkPos = chunkPos;
+		mutexLock.unlock();
+		
+		chunkLoaderCondition.notify_all();
 	}
 }
 
@@ -64,16 +111,14 @@ Chunk* ChunkManager::getChunk(int x, int y, int z) {
 
 Chunk* ChunkManager::createChunk(int x, int y, int z) {
 	Chunk* c = new Chunk(x, y, z);
-	c->generateData();
 
 	for (int side = 0; side < 6; ++side) {
 		int x2 = x + neighborsIndices[3 * side];
 		int y2 = y + neighborsIndices[3 * side + 1];
 		int z2 = z + neighborsIndices[3 * side + 2];
 
-		auto it = chunks.find(glm::ivec3(x2, y2, z2));
-		if (it != chunks.end()) {
-			Chunk* c2 = it->second;
+		Chunk* c2 = getChunk(x2, y2, z2);
+		if (c2 != nullptr) {
 			int side2 = (side % 2 == 0) ? side + 1 : side - 1;
 			c->neighbors[side] = c2;
 			c2->neighbors[side2] = c;
@@ -81,19 +126,62 @@ Chunk* ChunkManager::createChunk(int x, int y, int z) {
 	}
 
 	chunks.insert(std::make_pair(glm::ivec3(x, y, z), c));
+	//chunks[glm::ivec3(x, y, z)] = c;
 	return c;
 }
 
-void ChunkManager::deleteChunk(ChunkMap::iterator it) {
-	delete it->second;
-	chunks.erase(it);
+ChunkMap::iterator ChunkManager::deleteChunk(ChunkMap::iterator it) {
+	Chunk* c = it->second;
+	delete c;
+	return chunks.erase(it);
 }
 
-bool ChunkManager::isInRenderDistance(glm::ivec3 target, glm::ivec3 pos, int padding) {
-	int range = renderDistance + padding;
-	return (
-		target.x >= pos.x - range && target.x <= pos.x + range &&
-		target.y >= pos.y - range && target.y <= pos.y + range &&
-		target.z >= pos.z - range && target.z <= pos.z + range
-	);
+void chunkLoaderFunc(ChunkManager* cm) {
+	std::queue<Chunk*> dataQueue, meshQueue;
+
+	while (true) {
+		// Read shared queue
+		std::unique_lock<std::mutex> mutexLock(cm->chunkLoaderMutex);
+
+		// Wait to be notified
+		if (cm->chunkLoaderQueue.empty() && cm->chunkLoaderIsRunning)
+			cm->chunkLoaderCondition.wait(mutexLock, [&cm]() { return !cm->chunkLoaderQueue.empty() || !cm->chunkLoaderIsRunning; });
+
+		if (!cm->chunkLoaderIsRunning)
+			break;
+
+		glm::ivec3 chunkPos = cm->lastChunkPos;
+
+		// Get new chunks
+		do {
+			Chunk* c = cm->chunkLoaderQueue.front();
+			cm->chunkLoaderQueue.pop();
+			dataQueue.push(c);
+		} while (!cm->chunkLoaderQueue.empty());
+
+		mutexLock.unlock();
+
+		// Generate data for new chunks
+		while (!dataQueue.empty()) {
+			Chunk* c = dataQueue.front();
+			dataQueue.pop();
+
+			if (!c->dataGenerated)
+				c->generateData();
+
+			if (isWithinDistance(c->pos, chunkPos, cm->lastRenderDistance))
+				meshQueue.push(c);
+			else
+				c->isLoaded = true;
+		}
+
+		// Generate mesh for new chunks
+		while (!meshQueue.empty()) {
+			Chunk* c = meshQueue.front();
+			meshQueue.pop();
+
+			c->generateMesh();
+			c->isLoaded = true;
+		}
+	}
 }

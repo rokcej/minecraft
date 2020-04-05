@@ -63,6 +63,7 @@ int main() {
 		return -1;
 
 	// Create window
+	glfwWindowHint(GLFW_SAMPLES, 8);
 	GLFWwindow* window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE, NULL, NULL);
 	if (!window) {
 		glfwTerminate();
@@ -95,8 +96,9 @@ int main() {
 	//glfwSetWindowFocusCallback(window, windowFocusCallback);
 
 	// OpenGL flags
+	glEnable(GL_MULTISAMPLE);
 	glEnable(GL_DEPTH_TEST);
-	//glEnable(GL_CULL_FACE);
+	glEnable(GL_CULL_FACE);
 	//glEnable(GL_BLEND);
 	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -128,16 +130,17 @@ int main() {
 		}
 		++frameCount;
 
-		contextStack.top()->update(dt);
-		contextStack.top()->render();
+		Context* ctx = contextStack.top();
+		ctx->update(dt);
+		ctx->render();
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 
-		if (contextStack.top()->close)
+		if (ctx->close)
 			popContext(window, contextStack);
 	}
-	
+
 	// Cleanup
 	glfwTerminate();
 	while (!contextStack.empty())
