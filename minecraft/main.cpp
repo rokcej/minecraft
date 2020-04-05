@@ -120,7 +120,7 @@ int main() {
 		float t_fps = std::chrono::duration<float>(timerNow - timerFps).count(); // Time elapsed since last FPS calculation
 		timerPrev = timerNow;
 
-		if (t_fps >= 1.0f) {
+		if (t_fps >= 1.f) {
 			float fps = (float)frameCount / t_fps;
 			char title[64];
 			snprintf(title, sizeof(title), WINDOW_TITLE " (%.0f FPS)", fps);

@@ -28,9 +28,25 @@ layout (location = 0) in vec3 aPos; \n\
 layout (location = 1) in vec3 aTexCoord; \n\
 out vec3 vTexCoord; \n\
 uniform mat4 uPVM; \n\
+// Fog \n\
+out float vFogIntensity; \n\
+uniform int uEnableFog; \n\
+uniform vec3 uCameraPos; \n\
+uniform float uRenderDistance; \n\
+uniform float uFogDepth; \n\
 void main() { \n\
 	gl_Position = uPVM * vec4(aPos, 1.0f); \n\
 	vTexCoord = aTexCoord; \n\
+	// Calculate fog \n\
+	if (uEnableFog != 0) { \n\
+		float distance = length(aPos - uCameraPos); \n\
+		if (distance <= uRenderDistance - uFogDepth) // In front of fog \n\
+			vFogIntensity = 0.f; \n\
+		else if (distance >= uRenderDistance) // Behind fog \n\
+			vFogIntensity = 1.f; \n\
+		else // Inside fog \n\
+			vFogIntensity = pow((distance - (uRenderDistance - uFogDepth)) / uFogDepth, 2); \n\
+	} \n\
 } \n\
 ";
 
@@ -39,8 +55,14 @@ const char* fsSourceTex = "\n\
 in vec3 vTexCoord; \n\
 out vec4 oColor; \n\
 uniform sampler2DArray uTex; \n\
+// Fog \n\
+in float vFogIntensity; \n\
+uniform int uEnableFog; \n\
 void main() { \n\
 	oColor = texture(uTex, vTexCoord); \n\
+	// Apply fog \n\
+	if (uEnableFog != 0) \n\
+		oColor.rgb *= 1 - vFogIntensity; \n\
 } \n\
 ";
 

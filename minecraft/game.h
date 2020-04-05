@@ -10,8 +10,6 @@
 
 class Game : public Context {
 private:
-	GLuint prog;
-	GLuint tex;
 	Player player;
 	Camera camera;
 	ChunkManager chunkManager;

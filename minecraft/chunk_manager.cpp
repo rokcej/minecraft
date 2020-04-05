@@ -27,7 +27,7 @@ ChunkManager::~ChunkManager() {
 	// Terminate chunk loader thread
 	std::unique_lock<std::mutex> mutexLock(chunkLoaderMutex);
 	chunkLoaderIsRunning = false;
-	chunkLoaderMutex.unlock();
+	mutexLock.unlock();
 	chunkLoaderCondition.notify_all();
 	chunkLoaderThread.join();
 
@@ -37,7 +37,7 @@ ChunkManager::~ChunkManager() {
 }
 
 void ChunkManager::update(Camera* camera) {
-	glm::ivec3 chunkPos = blockToChunkPos(camera->entity->pos); // Current position in chunk coordinates
+	glm::ivec3 chunkPos = blockToChunkPos(camera->getPos()); // Current position in chunk coordinates
 
 	// Process existing chunks
 	for (auto it = chunks.begin(); it != chunks.end(); /* No increment */) {
@@ -96,7 +96,6 @@ void ChunkManager::update(Camera* camera) {
 		}
 
 		mutexLock.unlock();
-		
 		chunkLoaderCondition.notify_all();
 	}
 }

@@ -14,7 +14,7 @@
 // Chunk hash map data structure
 struct ivec3Hash {
 	// http://www.beosil.com/download/CollisionDetectionHashing_VMV03.pdf
-	std::size_t operator()(const glm::ivec3& vec) const {
+	inline std::size_t operator()(const glm::ivec3& vec) const {
 		return (vec.x * 11483) ^ (vec.y * 15787) ^ (vec.z * 19697);
 	}
 };

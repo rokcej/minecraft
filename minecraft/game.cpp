@@ -42,65 +42,40 @@ void Game::framebufferSizeCallback(GLFWwindow* window, int width, int height) {
 void Game::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
 	switch (key) {
 	// Debugging
-	/// Filtering
-	case GLFW_KEY_N:
-		if (action == GLFW_PRESS) {
-			if (mods & GLFW_MOD_SHIFT)
-				glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-			else
-				glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+	/// Fog
+	case GLFW_KEY_F:
+		if (action == GLFW_PRESS) { // Toggle fog
+			camera.enableFog = !camera.enableFog;
 		}
 		break;
-	case GLFW_KEY_L:
+	case GLFW_KEY_MINUS:
 		if (action == GLFW_PRESS) {
-			if (mods & GLFW_MOD_SHIFT)
-				glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			else
-				glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
+			if (mods & GLFW_MOD_SHIFT) { // Decrease fog depth
+				--camera.fogDepth;
+				if (camera.fogDepth < 0)
+					camera.fogDepth = 0;
+			} else { // Decrease render distance
+				--camera.renderDistance;
+				if (camera.renderDistance < 0)
+					camera.renderDistance = 0;
+				if (camera.fogDepth > camera.renderDistance)
+					camera.fogDepth = camera.renderDistance;
+				camera.updateProjMat(getAspectRatio());
+			}
 		}
 		break;
-	/// Mipmap level and anisotropic filtering level
-	case GLFW_KEY_0:
+	case GLFW_KEY_EQUAL:
 		if (action == GLFW_PRESS) {
-			if (mods & GLFW_MOD_SHIFT)
-				glTexParameterf(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_ANISOTROPY, 1.f);
-			else
-				glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_LEVEL, 0);
+			if (mods & GLFW_MOD_SHIFT) { // Increase fog depth
+				++camera.fogDepth;
+				if (camera.fogDepth > camera.renderDistance)
+					camera.fogDepth = camera.renderDistance;
+			} else { // Increase render distance
+				++camera.renderDistance;
+				camera.updateProjMat(getAspectRatio());
+			}
 		}
 		break;
-	case GLFW_KEY_1:
-		if (action == GLFW_PRESS) {
-			if (mods & GLFW_MOD_SHIFT)
-				glTexParameterf(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_ANISOTROPY, 2.f);
-			else
-				glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_LEVEL, 1);
-		}
-		break;
-	case GLFW_KEY_2:
-		if (action == GLFW_PRESS) {
-			if (mods & GLFW_MOD_SHIFT)
-				glTexParameterf(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_ANISOTROPY, 4.f);
-			else
-				glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_LEVEL, 2);
-		}
-		break;
-	case GLFW_KEY_3:
-		if (action == GLFW_PRESS) {
-			if (mods & GLFW_MOD_SHIFT)
-				glTexParameterf(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_ANISOTROPY, 8.f);
-			else
-				glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_LEVEL, 3);
-		}
-		break;
-	case GLFW_KEY_4:
-		if (action == GLFW_PRESS) {
-			if (mods & GLFW_MOD_SHIFT)
-				glTexParameterf(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_ANISOTROPY, 16.f);
-			else
-				glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_LEVEL, 4);
-		}
-		break;
-
 	// UI
 	case GLFW_KEY_ESCAPE:
 		if (action == GLFW_PRESS)

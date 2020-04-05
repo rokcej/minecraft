@@ -6,7 +6,7 @@ class Player {
 public:
 	float speed = 3.f * 1.5f;
 
-	glm::vec3 pos{ 0.f, 52.f, 0.f }; // x, y, z
+	glm::vec3 pos{ 0.f, 53.f, 0.f }; // x, y, z
 	glm::vec2 rot{ 0.f, 0.f }; // yaw, pitch
 
 	glm::vec3 forward{ 0.f, 0.f, -1.f };

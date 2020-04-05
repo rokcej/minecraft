@@ -106,15 +106,12 @@ void Chunk::generateData() {
 	for (int y = 0; y < CHUNK_SIZE; ++y) {
 	for (int z = 0; z < CHUNK_SIZE; ++z) {
 		int height = pos.y * CHUNK_SIZE + y;
-		int maxHeight = 48 + pos.x + pos.z;
-		if (height == maxHeight)
-			data[z][y][x] = BLOCK_GRASS;
-		else if (height < maxHeight - 16)
-			data[z][y][x] = BLOCK_STONE;
-		else if (height < maxHeight)
-			data[z][y][x] = BLOCK_DIRT;
-		else
+		int maxHeight = 52;
+		if (height <= maxHeight) {
+			data[z][y][x] = (abs(pos.x) + abs(pos.z)) % 2 + 1;
+		} else {
 			data[z][y][x] = BLOCK_AIR;
+		}
 	}
 	}
 	}
