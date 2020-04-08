@@ -5,6 +5,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include "game.h"
+#include "timer.h"
 
 #define WINDOW_TITLE "Minecraft"
 #define WINDOW_WIDTH 1600
@@ -107,33 +108,18 @@ int main() {
 	// Create context
 	std::stack<Context*> contextStack;
 	pushContext(window, contextStack, new Game(window));
-
-	// Timer
-	auto timerStart = std::chrono::steady_clock::now();
-	auto timerPrev = timerStart;
-	auto timerFps = timerStart;
-	int frameCount = 0;
+	
+	// Timers
+	Timer timer;
+	FPSTimer fpsTimer;
 
 	// Main loop
 	while (!glfwWindowShouldClose(window) && !contextStack.empty()) {
-		auto timerNow = std::chrono::steady_clock::now();
-		float dt = std::chrono::duration<float>(timerNow - timerPrev).count(); // Time elapsed since last frame
-		float t = std::chrono::duration<float>(timerNow - timerStart).count(); // Total time elapsed
-		float t_fps = std::chrono::duration<float>(timerNow - timerFps).count(); // Time elapsed since last FPS calculation
-		timerPrev = timerNow;
-
-		if (t_fps >= 1.f) {
-			float fps = (float)frameCount / t_fps;
-			char title[64];
-			snprintf(title, sizeof(title), WINDOW_TITLE " (%.0f FPS)", fps);
-			glfwSetWindowTitle(window, title);
-			frameCount = 0;
-			timerFps = timerNow;
-		}
-		++frameCount;
+		timer.update();
+		fpsTimer.update(window);
 
 		Context* ctx = contextStack.top();
-		ctx->update(dt);
+		ctx->update(timer.deltaTime());
 		ctx->render();
 
 		glfwSwapBuffers(window);
