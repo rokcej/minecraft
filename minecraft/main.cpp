@@ -10,6 +10,7 @@
 #define WINDOW_WIDTH 1600
 #define WINDOW_HEIGHT 900
 #define WINDOW_FULLSCREEN false
+#define WINDOW_ANTI_ALIASING 8
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
 	glViewport(0, 0, width, height);
@@ -64,7 +65,7 @@ int main() {
 		return -1;
 
 	// Create window
-	glfwWindowHint(GLFW_SAMPLES, 8);
+	glfwWindowHint(GLFW_SAMPLES, WINDOW_ANTI_ALIASING);
 	GLFWwindow* window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE, WINDOW_FULLSCREEN ? glfwGetPrimaryMonitor() : NULL, NULL);
 	if (!window) {
 		glfwTerminate();

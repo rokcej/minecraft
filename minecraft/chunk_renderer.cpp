@@ -2,14 +2,14 @@
 
 #include <math.h>
 #include <glm/gtc/type_ptr.hpp>
-#include "shaders.h"
+#include "shader_loader.h"
+#include "texture_loader.h"
 #include "texture_loader.h"
 #include "collision.h"
 
 ChunkRenderer::ChunkRenderer() {
 	// Shaders
-	this->prog = compileProgram(vsSourceTex, fsSourceTex);
-
+	this->prog = compileProgram("chunk_vertex.glsl", "chunk_fragment.glsl");
 	// Textures
 	this->tex = TextureLoader::loadTextureAtlas("textures.png");
 }

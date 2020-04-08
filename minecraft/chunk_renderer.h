@@ -1,7 +1,5 @@
 #pragma once
 
-#include "shaders.h"
-#include "texture_loader.h"
 #include "chunk_manager.h"
 
 class ChunkRenderer {

@@ -2,11 +2,12 @@
 
 #include "block_data.h"
 #include "png_reader.h"
+#include "defines.h"
 
-GLuint TextureLoader::loadTextureAtlas(const char* filename) {
+GLuint TextureLoader::loadTextureAtlas(std::string filename) {
 	// Read image
 	int imageWidth, imageHeight, imageChannels = 4;
-	GLubyte* imageData = read_png("data/textures.png", &imageWidth, &imageHeight, false);
+	GLubyte* imageData = read_png((TEXTURE_DATA_PATH + filename).c_str(), &imageWidth, &imageHeight, false);
 	if (imageData == nullptr)
 		return 0;
 	GLenum imageFormat = imageChannels == 4 ? GL_RGBA : GL_RGB;
