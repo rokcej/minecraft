@@ -2,13 +2,7 @@
 
 #include <math.h>
 #include "block_data.h"
-
-#define SIDE_LEFT 0
-#define SIDE_RIGHT 1
-#define SIDE_BOT 2
-#define SIDE_TOP 3
-#define SIDE_BACK 4
-#define SIDE_FRONT 5
+#include "defines.h"
 
 const GLfloat blockVertices[] = { // Block vertices
 	// Left
@@ -105,12 +99,18 @@ void Chunk::generateData() {
 	for (int x = 0; x < CHUNK_SIZE; ++x) {
 	for (int y = 0; y < CHUNK_SIZE; ++y) {
 	for (int z = 0; z < CHUNK_SIZE; ++z) {
-		int height = pos.y * CHUNK_SIZE + y;
+		int height = pos.y * CHUNK_SIZE + y + pos.x;
 		int maxHeight = 52;
-		if (height <= maxHeight) {
-			data[z][y][x] = (abs(pos.x) + abs(pos.z)) % 2 + 1;
+		if (pos.x == 0) {
+			data[z][y][x] = BlockType::AIR;
+		} else if (height == maxHeight) {
+			data[z][y][x] = BlockType::GRASS;
+		} else if (height < maxHeight - 32) {
+			data[z][y][x] = BlockType::STONE;
+		} else if (height < maxHeight) {
+			data[z][y][x] = BlockType::DIRT;
 		} else {
-			data[z][y][x] = BLOCK_AIR;
+			data[z][y][x] = BlockType::AIR;
 		}
 	}
 	}
@@ -135,7 +135,7 @@ void Chunk::generateMesh() {
 	for (int z = 0; z < CHUNK_SIZE; ++z) {
 		uint8_t blockType = data[z][y][x];
 
-		if (blockType != BLOCK_AIR) {
+		if (blockType != BlockType::AIR) {
 			GLfloat x_offset = (GLfloat)(x + pos.x * CHUNK_SIZE);
 			GLfloat y_offset = (GLfloat)(y + pos.y * CHUNK_SIZE);
 			GLfloat z_offset = (GLfloat)(z + pos.z * CHUNK_SIZE);
@@ -145,7 +145,7 @@ void Chunk::generateMesh() {
 				int yn = y + neighborsIndices[3 * side + 1];
 				int zn = z + neighborsIndices[3 * side + 2];
 
-				uint8_t neighborType = BLOCK_AIR;
+				uint8_t neighborType = BlockType::AIR;
 				if (xn < 0 || xn >= CHUNK_SIZE || yn < 0 || yn >= CHUNK_SIZE || zn < 0 || zn >= CHUNK_SIZE) {
 					if (neighbors[side] != nullptr && neighbors[side]->dataGenerated) {
 						int xn2 = xn - neighborsIndices[3 * side + 0] * CHUNK_SIZE;
@@ -159,16 +159,9 @@ void Chunk::generateMesh() {
 					neighborType = data[zn][yn][xn];
 				}
 
-				if (neighborType == BLOCK_AIR) {
+				if (neighborType == BlockType::AIR) {
 					// Texture coordinates
-					float texIndex;
-					if (side == SIDE_TOP) {
-						texIndex = blockData[blockType].topTextureIndex;
-					} else if (side == SIDE_BOT) {
-						texIndex = blockData[blockType].botTextureIndex;
-					} else {
-						texIndex = blockData[blockType].sideTextureIndex;
-					}
+					float textureIndex = blockData[blockType].textureIndices[side];
 
 					// Add vertices
 					for (int j = 0; j < 4; ++j) {
@@ -177,7 +170,7 @@ void Chunk::generateMesh() {
 						vertices.push_back(blockVertices[12 * side + 3 * j + 2] + z_offset);
 						vertices.push_back(faceTextureCoordinates[2 * j + 0]);
 						vertices.push_back(faceTextureCoordinates[2 * j + 1]);
-						vertices.push_back(texIndex);
+						vertices.push_back(textureIndex);
 					}
 					// Add indices
 					for (int j = 0; j < 6; ++j) {
@@ -227,7 +220,7 @@ bool Chunk::hasAllNeighbors() {
 	return true;
 }
 
-glm::ivec3 blockToChunkPos(glm::vec3 blockPos) {
+glm::ivec3 blockToChunkPos(const glm::vec3& blockPos) {
 	return glm::ivec3(
 		(int)floorf(blockPos.x / (float)CHUNK_SIZE),
 		(int)floorf(blockPos.y / (float)CHUNK_SIZE),

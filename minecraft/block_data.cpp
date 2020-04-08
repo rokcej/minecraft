@@ -1,19 +1,26 @@
 #include "block_data.h"
 
 #include <iostream>
+#include "defines.h"
+
+bool blockDataInitialized = false;
 
 BlockData blockData[256];
 
 BlockData::BlockData() : BlockData(TEXTURE_ATLAS_WIDTH - 1, TEXTURE_ATLAS_HEIGHT - 1) {}
 BlockData::BlockData(int row, int col) : BlockData(row, col, row, col, row, col) {}
-BlockData::BlockData(int rowSide, int colSide, int rowTop, int colTop, int rowBot, int colBot) :
-	sideTextureIndex { (float)rowSide * (float)TEXTURE_ATLAS_WIDTH + (float)colSide },
-	topTextureIndex { (float)rowTop * (float)TEXTURE_ATLAS_WIDTH + (float)colTop },
-	botTextureIndex { (float)rowBot * (float)TEXTURE_ATLAS_WIDTH + (float)colBot }
+BlockData::BlockData(int rowSide, int colSide, int rowTop, int colTop, int rowBot, int colBot) {
+	// Side
+	textureIndices[Side::LEFT] = (float)rowSide * (float)TEXTURE_ATLAS_WIDTH + (float)colSide;
+	textureIndices[Side::RIGHT] = textureIndices[Side::LEFT];
+	textureIndices[Side::BACK] = textureIndices[Side::LEFT];
+	textureIndices[Side::FRONT] = textureIndices[Side::LEFT];
+	// Top
+	textureIndices[Side::TOP] = (float)rowTop * (float)TEXTURE_ATLAS_WIDTH + (float)colTop;
+	// Bottom
+	textureIndices[Side::BOT] = (float)rowBot * (float)TEXTURE_ATLAS_WIDTH + (float)colBot;
+}
 
-{}
-
-bool blockDataInitialized = false;
 
 void initBlockData() {
 	if (blockDataInitialized) {
@@ -22,8 +29,9 @@ void initBlockData() {
 	}
 	blockDataInitialized = true;
 
-	blockData[BLOCK_AIR] = BlockData();
-	blockData[BLOCK_STONE] = BlockData(0, 0);
-	blockData[BLOCK_DIRT] = BlockData(0, 1);
-	blockData[BLOCK_GRASS] = BlockData(0, 3, 0, 2, 0, 1);
+	blockData[BlockType::AIR] = BlockData();
+	blockData[BlockType::STONE] = BlockData(0, 0);
+	blockData[BlockType::DIRT] = BlockData(0, 1);
+	blockData[BlockType::GRASS] = BlockData(0, 3, 0, 2, 0, 1);
+	blockData[BlockType::SAND] = BlockData(0, 4);
 }

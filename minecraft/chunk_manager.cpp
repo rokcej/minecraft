@@ -1,7 +1,8 @@
 #include "chunk_manager.h"
 
-#include <iostream>
 #include <chrono>
+#include <vector>
+#include <algorithm>
 #include "block_data.h"
 
 // Check if target is within Manhattan distance of pos
@@ -37,6 +38,11 @@ ChunkManager::~ChunkManager() {
 }
 
 void ChunkManager::update(Camera* camera) {
+	// TODO:
+	// 1) Limit the number of chunks created, loaded and deleted per frame
+	// 2) Create and load chunks radially, so that chunks nearest to the player are loaded first
+	// 
+
 	glm::ivec3 chunkPos = blockToChunkPos(camera->getPos()); // Current position in chunk coordinates
 
 	// Process existing chunks
@@ -100,7 +106,7 @@ void ChunkManager::update(Camera* camera) {
 	}
 }
 
-Chunk* ChunkManager::getChunk(int x, int y, int z) {
+Chunk* ChunkManager::getChunk(int x, int y, int z) const {
 	auto it = chunks.find(glm::ivec3(x, y, z));
 	if (it != chunks.end())
 		return it->second;
@@ -136,7 +142,7 @@ ChunkMap::iterator ChunkManager::deleteChunk(ChunkMap::iterator it) {
 }
 
 void chunkLoaderFunc(ChunkManager* cm) {
-	std::queue<Chunk*> dataQueue, meshQueue;
+	std::queue<Chunk*> dataQueue;
 
 	while (true) {
 		// Read shared queue
@@ -150,6 +156,15 @@ void chunkLoaderFunc(ChunkManager* cm) {
 			break;
 
 		glm::ivec3 chunkPos = cm->lastChunkPos;
+
+		// Priority queue that loads meshes in order of increasing distance from player
+		auto cmp = [&chunkPos](Chunk* &left, Chunk* &right) {\
+			glm::vec3 l = left->pos - chunkPos;
+			glm::vec3 r = right->pos - chunkPos;
+			//return (l.x * l.x + l.y * l.y + l.z * l.z) > (r.x * r.x + r.y * r.y + r.z * r.z); // Euclidean distance
+			return (abs(l.x) + abs(l.y) + abs(l.z)) > (abs(r.x) + abs(r.y) + abs(r.z)); // Manhattan distance
+		};
+		std::priority_queue<Chunk*, std::vector<Chunk*>, decltype(cmp)> meshQueue(cmp);
 
 		// Get new chunks
 		do {
@@ -176,7 +191,7 @@ void chunkLoaderFunc(ChunkManager* cm) {
 
 		// Generate mesh for new chunks
 		while (!meshQueue.empty()) {
-			Chunk* c = meshQueue.front();
+			Chunk* c = meshQueue.top();
 			meshQueue.pop();
 
 			c->generateMesh();

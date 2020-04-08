@@ -66,6 +66,23 @@ void main() { \n\
 } \n\
 ";
 
+const char* vsSourceLine = "\n\
+#version 450 core \n\
+layout (location = 0) in vec3 aPos; \n\
+uniform mat4 uPVM; \n\
+void main() { \n\
+	gl_Position = uPVM * vec4(aPos, 1.0f); \n\
+} \n\
+";
+
+const char* fsSourceLine = "\n\
+#version 450 core \n\
+out vec4 oColor; \n\
+void main() { \n\
+	oColor = vec4(1.f, 1.f, 1.f, 1.f); \n\
+} \n\
+";
+
 GLuint compileProgram(const char* vsSrc, const char* fsSrc) {
 	// Error log
 	GLint status;

@@ -40,7 +40,7 @@ public:
 
 	void update(Camera* camera);
 
-	Chunk* getChunk(int x, int y, int z);
+	Chunk* getChunk(int x, int y, int z) const;
 	Chunk* createChunk(int x, int y, int z);
 	ChunkMap::iterator deleteChunk(ChunkMap::iterator it);
 };

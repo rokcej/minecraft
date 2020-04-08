@@ -9,6 +9,7 @@
 #define WINDOW_TITLE "Minecraft"
 #define WINDOW_WIDTH 1600
 #define WINDOW_HEIGHT 900
+#define WINDOW_FULLSCREEN false
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
 	glViewport(0, 0, width, height);
@@ -64,7 +65,7 @@ int main() {
 
 	// Create window
 	glfwWindowHint(GLFW_SAMPLES, 8);
-	GLFWwindow* window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE, NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE, WINDOW_FULLSCREEN ? glfwGetPrimaryMonitor() : NULL, NULL);
 	if (!window) {
 		glfwTerminate();
 		return -1;

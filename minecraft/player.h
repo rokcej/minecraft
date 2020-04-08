@@ -11,6 +11,7 @@ public:
 
 	glm::vec3 forward{ 0.f, 0.f, -1.f };
 	glm::vec3 up{ 0.f, 1.f, 0.f };
+	glm::vec3 right{ 1.f, 0.f, 0.f };
 
 	glm::vec3 move{ 0.f, 0.f, 0.f };
 

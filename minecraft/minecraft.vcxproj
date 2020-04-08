@@ -151,6 +151,7 @@
     <ClCompile Include="chunk.cpp" />
     <ClCompile Include="chunk_manager.cpp" />
     <ClCompile Include="chunk_renderer.cpp" />
+    <ClCompile Include="collision.cpp" />
     <ClCompile Include="game.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="player.cpp" />
@@ -164,7 +165,9 @@
     <ClInclude Include="chunk.h" />
     <ClInclude Include="chunk_manager.h" />
     <ClInclude Include="chunk_renderer.h" />
+    <ClInclude Include="collision.h" />
     <ClInclude Include="context.h" />
+    <ClInclude Include="defines.h" />
     <ClInclude Include="game.h" />
     <ClInclude Include="player.h" />
     <ClInclude Include="png_reader.h" />

@@ -1,5 +1,6 @@
 #include "game.h"
 
+#include <iostream>
 #define _USE_MATH_DEFINES
 #include <math.h>
 
@@ -9,11 +10,8 @@ Game::Game(GLFWwindow* window) :
 	Context(window),
 	chunkManager(),
 	chunkRenderer(),
-	camera(&player)
-{
-	// Camera
-	camera.updateProjMat(this->getAspectRatio());
-}
+	camera(&player, getAspectRatio())
+{}
 
 Game::~Game() {
 
@@ -23,7 +21,7 @@ void Game::render() {
 	glClearColor(0.f, 0.f, 0.f, 1.f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	chunkRenderer.render(&camera, &chunkManager);
+	chunkRenderer.render(camera, chunkManager);
 }
 
 void Game::update(float dt) {
@@ -37,11 +35,25 @@ void Game::update(float dt) {
 
 // Callbacks
 void Game::framebufferSizeCallback(GLFWwindow* window, int width, int height) {
-	camera.updateProjMat((float)width / (float)height);
+	camera.setAspectRatio((float)width / (float)height);
 }
 void Game::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
 	switch (key) {
 	// Debugging
+	/// Third person
+	case GLFW_KEY_T:
+		if (action == GLFW_PRESS) { // Toggle third person mode
+			camera.thirdPerson = !camera.thirdPerson;
+		}
+		break;
+	/// Chunks
+	case GLFW_KEY_R:
+		if (action == GLFW_PRESS) { // Reload chunks
+			for (auto it = chunkManager.chunks.begin(); it != chunkManager.chunks.end(); )
+				it = chunkManager.deleteChunk(it);
+			chunkManager.lastChunkPos = glm::ivec3(1 < 31);
+		}
+		break;
 	/// Fog
 	case GLFW_KEY_F:
 		if (action == GLFW_PRESS) { // Toggle fog
@@ -60,7 +72,7 @@ void Game::keyCallback(GLFWwindow* window, int key, int scancode, int action, in
 					camera.renderDistance = 0;
 				if (camera.fogDepth > camera.renderDistance)
 					camera.fogDepth = camera.renderDistance;
-				camera.updateProjMat(getAspectRatio());
+				camera.updateProjMat();
 			}
 		}
 		break;
@@ -72,7 +84,7 @@ void Game::keyCallback(GLFWwindow* window, int key, int scancode, int action, in
 					camera.fogDepth = camera.renderDistance;
 			} else { // Increase render distance
 				++camera.renderDistance;
-				camera.updateProjMat(getAspectRatio());
+				camera.updateProjMat();
 			}
 		}
 		break;

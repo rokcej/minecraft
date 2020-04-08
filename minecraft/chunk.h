@@ -15,7 +15,7 @@ extern const int neighborsIndices[];
 class Chunk {
 public:
 	glm::ivec3 pos;
-	uint8_t data[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE] = { 0 }; // [z][y][x]
+	std::atomic<uint8_t> data[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE] = { 0 }; // [z][y][x]
 	Chunk* neighbors[6] = { nullptr }; // -x, +x, -y, +y, -z, +z
 
 	GLuint vao = 0, vbo, ebo;
@@ -39,4 +39,4 @@ public:
 	void loadMesh(); // Loads mesh onto GPU
 };
 
-glm::ivec3 blockToChunkPos(glm::vec3 blockPos);
+glm::ivec3 blockToChunkPos(const glm::vec3& blockPos);

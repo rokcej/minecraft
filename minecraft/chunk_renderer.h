@@ -12,5 +12,5 @@ public:
 	ChunkRenderer();
 	~ChunkRenderer();
 
-	void render(Camera* camera, ChunkManager* chunkManager);
+	void render(const Camera& camera, const ChunkManager& chunkManager);
 };
