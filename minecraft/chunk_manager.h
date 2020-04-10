@@ -8,8 +8,9 @@
 #include <condition_variable>
 #include <atomic>
 #include <glm/glm.hpp>
-#include "chunk.h"
-#include "camera.h"
+
+class Chunk;
+class Camera;
 
 // Chunk hash map data structure
 struct ivec3Hash {
@@ -40,8 +41,12 @@ public:
 
 	void update(Camera* camera);
 
-	Chunk* getChunk(int x, int y, int z) const;
-	Chunk* createChunk(int x, int y, int z);
+	Chunk* getChunk(const glm::ivec3& chunkPos) const;
+	int getBlock(const glm::ivec3& blockPos) const;
+
+	void setBlock(const glm::ivec3& blockPos, int blockType);
+
+	Chunk* createChunk(const glm::ivec3& chunkPos);
 	ChunkMap::iterator deleteChunk(ChunkMap::iterator it);
 };
 

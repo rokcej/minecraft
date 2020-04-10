@@ -29,7 +29,7 @@ public:
 
 	std::atomic<bool> isLoaded = false;
 
-	Chunk(int x, int y, int z);
+	Chunk(const glm::ivec3& chunkPos);
 	~Chunk();
 
 	bool hasAllNeighbors();
@@ -40,3 +40,4 @@ public:
 };
 
 glm::ivec3 blockToChunkPos(const glm::vec3& blockPos);
+bool isLegalBlockPos(const glm::ivec3& pos);

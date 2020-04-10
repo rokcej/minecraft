@@ -3,7 +3,10 @@
 #include <chrono>
 #include <vector>
 #include <algorithm>
+#include "chunk.h"
+#include "camera.h"
 #include "block_data.h"
+#include "defines.h"
 
 // Check if target is within Manhattan distance of pos
 inline bool isWithinDistance(const glm::ivec3& target, const glm::ivec3& pos, const int distance) {
@@ -87,9 +90,10 @@ void ChunkManager::update(Camera* camera) {
 		for (int x = chunkPos.x - generateDistance; x <= chunkPos.x + generateDistance; ++x) {
 			for (int y = chunkPos.y - generateDistance; y <= chunkPos.y + generateDistance; ++y) {
 				for (int z = chunkPos.z - generateDistance; z <= chunkPos.z + generateDistance; ++z) {
-					Chunk* c = getChunk(x, y, z);
+					glm::ivec3 pos(x, y, z);
+					Chunk* c = getChunk(pos);
 					if (c == nullptr) {
-						c = createChunk(x, y, z);
+						c = createChunk(pos);
 						chunkLoaderQueue.push(c);
 					} else {
 						if (c->isLoaded && !c->meshGenerated && isWithinDistance(c->pos, chunkPos, camera->renderDistance)) {
@@ -106,23 +110,70 @@ void ChunkManager::update(Camera* camera) {
 	}
 }
 
-Chunk* ChunkManager::getChunk(int x, int y, int z) const {
-	auto it = chunks.find(glm::ivec3(x, y, z));
+Chunk* ChunkManager::getChunk(const glm::ivec3& chunkPos) const {
+	auto it = chunks.find(chunkPos);
 	if (it != chunks.end())
 		return it->second;
 	else
 		return nullptr;
 }
 
-Chunk* ChunkManager::createChunk(int x, int y, int z) {
-	Chunk* c = new Chunk(x, y, z);
+int ChunkManager::getBlock(const glm::ivec3& blockPos) const {
+	glm::ivec3 chunkPos = blockToChunkPos(blockPos);
+	glm::ivec3 blockPosRel = blockPos - chunkPos * CHUNK_SIZE;
+	Chunk* c = getChunk(chunkPos);
+	if (c != nullptr && c->dataGenerated)
+		return c->data[blockPosRel.z][blockPosRel.y][blockPosRel.x];
+	else
+		return BlockType::AIR;
+}
+
+void ChunkManager::setBlock(const glm::ivec3& blockPos, int blockType) {
+	glm::ivec3 chunkPos = blockToChunkPos(blockPos);
+	glm::ivec3 blockPosRel = blockPos - chunkPos * CHUNK_SIZE;
+	Chunk* c = getChunk(chunkPos);
+	if (c != nullptr && c->isLoaded) {
+		if (c->data[blockPosRel.z][blockPosRel.y][blockPosRel.x] != blockType) {
+			// If block is on chunk border, get neighboring chunks
+			std::vector<int> affectedSides;
+			for (int i = 0; i < 3; ++i) {
+				if (blockPosRel[i] == 0) affectedSides.push_back(2 * i);
+				else if (blockPosRel[i] == CHUNK_SIZE - 1) affectedSides.push_back(2 * i + 1);
+			}
+			// Check if all neighbors are ready
+			// TODO: Signal threads to reload the chunk instead of not doing anything
+			bool safeToUpdate = true;
+			for (int side : affectedSides) {
+				if (!c->neighbors[side]->isLoaded) {
+					safeToUpdate = false;
+					break;
+				}
+			}
+			// Update meshes if possible
+			if (safeToUpdate) {
+				c->data[blockPosRel.z][blockPosRel.y][blockPosRel.x] = blockType;
+				for (int side : affectedSides) {
+					c->neighbors[side]->generateMesh();
+					c->neighbors[side]->loadMesh();
+				}
+				c->generateMesh();
+				c->loadMesh();
+			}
+		}
+	}
+}
+
+Chunk* ChunkManager::createChunk(const glm::ivec3& chunkPos) {
+	Chunk* c = new Chunk(chunkPos);
 
 	for (int side = 0; side < 6; ++side) {
-		int x2 = x + neighborsIndices[3 * side];
-		int y2 = y + neighborsIndices[3 * side + 1];
-		int z2 = z + neighborsIndices[3 * side + 2];
+		glm::ivec3 chunkPos2 = chunkPos + glm::ivec3(
+			neighborsIndices[3 * side],
+			neighborsIndices[3 * side + 1],
+			neighborsIndices[3 * side + 2]
+		);
 
-		Chunk* c2 = getChunk(x2, y2, z2);
+		Chunk* c2 = getChunk(chunkPos2);
 		if (c2 != nullptr) {
 			int side2 = (side % 2 == 0) ? side + 1 : side - 1;
 			c->neighbors[side] = c2;
@@ -130,7 +181,7 @@ Chunk* ChunkManager::createChunk(int x, int y, int z) {
 		}
 	}
 
-	chunks.insert(std::make_pair(glm::ivec3(x, y, z), c));
+	chunks.insert(std::make_pair(chunkPos, c));
 	//chunks[glm::ivec3(x, y, z)] = c;
 	return c;
 }

@@ -2,6 +2,8 @@
 
 #include <math.h>
 #include <glm/gtc/type_ptr.hpp>
+#include "chunk.h"
+#include "chunk_manager.h"
 #include "shader_loader.h"
 #include "texture_loader.h"
 #include "texture_loader.h"
@@ -60,9 +62,10 @@ void ChunkRenderer::render(const Camera& camera, const ChunkManager& chunkManage
 			int zRange = (int)(sqrtf(radius2 - xMin * xMin - yMin * yMin) + 0.5f);
 			for (int zRel = -zRange; zRel <= zRange; ++zRel) {
 				int z = zRel + chunkPos.z;
+				glm::ivec3 pos(x, y, z);
 
 				// Loop body
-				Chunk* c = chunkManager.getChunk(x, y, z);
+				Chunk* c = chunkManager.getChunk(pos);
 				if (c != nullptr && c->meshLoaded && c->n_indices > 0) {
 					// Frustum culling
 					AABB aabb(c);

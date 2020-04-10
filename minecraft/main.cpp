@@ -33,6 +33,10 @@ void cursorPosCallback(GLFWwindow* window, double xPos, double yPos) {
 	Context* context = (Context*)glfwGetWindowUserPointer(window);
 	if (context) context->cursorPosCallback(window, xPos, yPos);
 }
+void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
+	Context* context = (Context*)glfwGetWindowUserPointer(window);
+	if (context) context->mouseButtonCallback(window, button, action, mods);
+}
 void windowFocusCallback(GLFWwindow* window, int focused) {
 	if (focused)
 		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -96,6 +100,7 @@ int main() {
 	glfwSetWindowRefreshCallback(window, windowRefreshCallback);
 	glfwSetKeyCallback(window, keyCallback);
 	glfwSetCursorPosCallback(window, cursorPosCallback);
+	glfwSetMouseButtonCallback(window, mouseButtonCallback);
 	//glfwSetWindowFocusCallback(window, windowFocusCallback);
 
 	// OpenGL flags

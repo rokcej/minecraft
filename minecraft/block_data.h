@@ -1,5 +1,7 @@
 #pragma once
 
+#include <glm/glm.hpp>
+
 #define TEXTURE_ATLAS_WIDTH 16
 #define TEXTURE_ATLAS_HEIGHT 16
 

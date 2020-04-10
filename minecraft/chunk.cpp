@@ -54,7 +54,7 @@ const int neighborsIndices[] = {
 	0, 0, -1, 0, 0, +1  // Back, front (-z, +z)
 };
 
-Chunk::Chunk(int x, int y, int z) : pos{ x, y, z } {
+Chunk::Chunk(const glm::ivec3& chunkPos) : pos(chunkPos) {
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
 
@@ -221,9 +221,9 @@ bool Chunk::hasAllNeighbors() {
 }
 
 glm::ivec3 blockToChunkPos(const glm::vec3& blockPos) {
-	return glm::ivec3(
-		(int)floorf(blockPos.x / (float)CHUNK_SIZE),
-		(int)floorf(blockPos.y / (float)CHUNK_SIZE),
-		(int)floorf(blockPos.z / (float)CHUNK_SIZE)
-	);
+	return (glm::ivec3) glm::floor(blockPos / (float)CHUNK_SIZE);
+}
+
+bool isLegalBlockPos(const glm::ivec3& pos) {
+	return pos.x >= 0 && pos.x < CHUNK_SIZE && pos.y >= 0 && pos.y < CHUNK_SIZE && pos.z >= 0 && pos.z < CHUNK_SIZE;
 }

@@ -3,6 +3,7 @@
 #include <iostream>
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include "block_data.h"
 
 constexpr float HALF_PI_LESS = ((float)M_PI_2 * 0.999f);
 
@@ -31,6 +32,9 @@ void Game::update(float dt) {
 
 	// Chunks
 	chunkManager.update(&camera);
+
+	// Block selection
+	camera.updateSelection(chunkManager);
 }
 
 // Callbacks
@@ -67,12 +71,12 @@ void Game::keyCallback(GLFWwindow* window, int key, int scancode, int action, in
 				if (camera.fogDepth < 0)
 					camera.fogDepth = 0;
 			} else { // Decrease render distance
-				--camera.renderDistance;
-				if (camera.renderDistance < 0)
-					camera.renderDistance = 0;
-				if (camera.fogDepth > camera.renderDistance)
-					camera.fogDepth = camera.renderDistance;
-				camera.updateProjMat();
+				if (camera.renderDistance > 1) {
+					camera.setRenderDistance(camera.renderDistance - 1);
+					if (camera.fogDepth > camera.renderDistance)
+						camera.fogDepth = camera.renderDistance;
+					camera.updateProjMat();
+				}
 			}
 		}
 		break;
@@ -83,7 +87,7 @@ void Game::keyCallback(GLFWwindow* window, int key, int scancode, int action, in
 				if (camera.fogDepth > camera.renderDistance)
 					camera.fogDepth = camera.renderDistance;
 			} else { // Increase render distance
-				++camera.renderDistance;
+				camera.setRenderDistance(camera.renderDistance + 1);
 				camera.updateProjMat();
 			}
 		}
@@ -153,4 +157,22 @@ void Game::cursorPosCallback(GLFWwindow* window, double xPos, double yPos) {
 		player.rot.x = -HALF_PI_LESS;
 
 	glfwSetCursorPos(window, 0.0, 0.0);
+}
+void Game::mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
+	switch (button) {
+	case GLFW_MOUSE_BUTTON_LEFT:
+		if (action == GLFW_PRESS) {
+			if (camera.isBlockSelected) {
+				chunkManager.setBlock(camera.selectedBlock, BlockType::AIR);
+			}
+		}
+		break;
+	case GLFW_MOUSE_BUTTON_RIGHT:
+		if (action == GLFW_PRESS) {
+			if (camera.isBlockSelected && camera.selectedBlock != camera.buildingBlock) {
+				chunkManager.setBlock(camera.buildingBlock, BlockType::SAND);
+			}
+		}
+		break;
+	}
 }

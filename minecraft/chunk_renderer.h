@@ -1,6 +1,9 @@
 #pragma once
 
-#include "chunk_manager.h"
+#include <GL/glew.h>
+
+class Camera;
+class ChunkManager;
 
 class ChunkRenderer {
 public:
