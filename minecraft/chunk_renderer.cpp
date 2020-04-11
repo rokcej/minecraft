@@ -11,30 +11,30 @@
 
 ChunkRenderer::ChunkRenderer() {
 	// Shaders
-	this->prog = compileProgram("chunk_vertex.glsl", "chunk_fragment.glsl");
+	this->progChunk = ShaderLoader::compileProgram("chunk_vertex.glsl", "chunk_fragment.glsl");
 	// Textures
-	this->tex = TextureLoader::loadTextureAtlas("textures.png");
+	this->texChunk = TextureLoader::loadTextureAtlas("terrain.png");
 }
 
 ChunkRenderer::~ChunkRenderer() {
-	glDeleteProgram(prog);
-	glDeleteTextures(1, &tex);
+	glDeleteProgram(progChunk);
+	glDeleteTextures(1, &texChunk);
 }
 
 void ChunkRenderer::render(const Camera& camera, const ChunkManager& chunkManager) {
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D_ARRAY, tex);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, texChunk);
 
-	glUseProgram(prog);
-	glUniform1i(glGetUniformLocation(prog, "uTex"), 0);
-	glm::mat4 pvmMat = camera.projMat * camera.viewMat;
-	glUniformMatrix4fv(glGetUniformLocation(prog, "uPVM"), 1, GL_FALSE, glm::value_ptr(pvmMat));
+	glUseProgram(progChunk);
+	glUniform1i(glGetUniformLocation(progChunk, "uTex"), 0);
+	glm::mat4 pvMat = camera.projMat * camera.viewMat;
+	glUniformMatrix4fv(glGetUniformLocation(progChunk, "uPVM"), 1, GL_FALSE, glm::value_ptr(pvMat));
 
 	// Fog
-	glUniform1i(glGetUniformLocation(prog, "uEnableFog"), (int)camera.enableFog);
-	glUniform3fv(glGetUniformLocation(prog, "uCameraPos"), 1, glm::value_ptr(camera.getPos()));
-	glUniform1f(glGetUniformLocation(prog, "uRenderDistance"), (float)camera.renderDistance * CHUNK_SIZE);
-	glUniform1f(glGetUniformLocation(prog, "uFogDepth"), (float)camera.fogDepth * CHUNK_SIZE);
+	glUniform1i(glGetUniformLocation(progChunk, "uEnableFog"), (int)camera.enableFog);
+	glUniform3fv(glGetUniformLocation(progChunk, "uCameraPos"), 1, glm::value_ptr(camera.getPos()));
+	glUniform1f(glGetUniformLocation(progChunk, "uRenderDistance"), (float)camera.renderDistance * CHUNK_SIZE);
+	glUniform1f(glGetUniformLocation(progChunk, "uFogDepth"), (float)camera.fogDepth * CHUNK_SIZE);
 
 	// View frustum
 	Frustum frustum(camera);
@@ -77,7 +77,6 @@ void ChunkRenderer::render(const Camera& camera, const ChunkManager& chunkManage
 			}
 		}
 	}
-	glBindVertexArray(0); // Unbind VAO
 
 	// Render chunks in square radius
 	//for (int x = chunkPos.x - camera->renderDistance; x <= chunkPos.x + camera->renderDistance; ++x) {
@@ -96,5 +95,6 @@ void ChunkRenderer::render(const Camera& camera, const ChunkManager& chunkManage
 	//		}
 	//	}
 	//}
-	//glBindVertexArray(0); // Unbind VAO
+
+	glBindVertexArray(0); // Unbind VAO
 }

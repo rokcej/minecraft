@@ -70,3 +70,34 @@ GLuint TextureLoader::loadTextureAtlas(std::string filename) {
 	// Return texture id
 	return tex;
 }
+
+GLuint TextureLoader::loadTexture(std::string filename) {
+	// Read image
+	int width, height, n_channels = 4;
+	GLubyte* data = read_png((TEXTURE_DATA_PATH + filename).c_str(), &width, &height, true);
+	if (data == nullptr)
+		return 0;
+	GLenum format = n_channels == 4 ? GL_RGBA : GL_RGB;
+
+	// Create array texture
+	GLuint tex;
+	glGenTextures(1, &tex);
+	glBindTexture(GL_TEXTURE_2D, tex);
+
+	// Texture parameters
+	/// Texture filtering
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	/// Texture wrapping
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+	// Load texture data
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+
+	// Free memory
+	free_png(data);
+
+	// Return texture id
+	return tex;
+}

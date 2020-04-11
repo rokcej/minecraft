@@ -2,7 +2,7 @@
 
 #define DATA_PATH "data/"
 #define SHADER_DATA_PATH (DATA_PATH "shaders/")
-#define TEXTURE_DATA_PATH DATA_PATH
+#define TEXTURE_DATA_PATH (DATA_PATH "textures/")
 
 enum Side {
 	LEFT = 0, // -x

@@ -17,7 +17,7 @@ std::string readFile(std::string filename) {
 	return oss.str();
 }
 
-GLuint compileProgram(std::string vertexShaderPath, std::string fragmentShaderPath) {
+GLuint ShaderLoader::compileProgram(std::string vertexShaderPath, std::string fragmentShaderPath) {
 	// Read shaders
 	std::string vertexShaderSource = readFile(SHADER_DATA_PATH + vertexShaderPath);
 	std::string fragmentShaderSource = readFile(SHADER_DATA_PATH + fragmentShaderPath);
@@ -35,7 +35,7 @@ GLuint compileProgram(std::string vertexShaderPath, std::string fragmentShaderPa
 	glGetShaderiv(vs, GL_COMPILE_STATUS, &status);
 	if (status == GL_FALSE) {
 		glGetShaderInfoLog(vs, sizeof(buf), NULL, buf);
-		std::cerr << "[Vertex shader compile error log]" << std::endl << buf << std::endl;
+		std::cerr << "[Vertex shader '" << vertexShaderPath << "' compile error log]" << std::endl << buf << std::endl;
 	}
 
 	// Fragment shader
@@ -45,7 +45,7 @@ GLuint compileProgram(std::string vertexShaderPath, std::string fragmentShaderPa
 	glGetShaderiv(fs, GL_COMPILE_STATUS, &status);
 	if (status == GL_FALSE) {
 		glGetShaderInfoLog(fs, sizeof(buf), NULL, buf);
-		std::cerr << "[Fragment shader compile error log]" << std::endl << buf << std::endl;
+		std::cerr << "[Fragment shader '" << fragmentShaderPath << "' compile error log]" << std::endl << buf << std::endl;
 	}
 
 	// Program

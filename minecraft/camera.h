@@ -3,7 +3,6 @@
 #include <glm/glm.hpp>
 
 class Player;
-class ChunkManager;
 
 class Camera {
 public:
@@ -19,9 +18,6 @@ public:
 	int fogDepth = 3; // Fog depth in chunks
 	// Aim
 	float reachDistance = 5.f;
-	bool isBlockSelected = false;
-	glm::ivec3 selectedBlock;
-	glm::ivec3 buildingBlock;
 
 	glm::vec3 relativePos = { 0.f, 1.5f, 0.f };
 	glm::mat4 projMat, viewMat;
@@ -31,7 +27,6 @@ public:
 	Camera(Player* entity, float aspectRatio);
 
 	// Update
-	void updateSelection(const ChunkManager& cm);
 	void updateViewMat();
 	void updateProjMat();
 

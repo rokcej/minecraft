@@ -7,8 +7,8 @@ class ChunkManager;
 
 class ChunkRenderer {
 public:
-	GLuint prog = 0;
-	GLuint tex = 0;
+	GLuint progChunk = 0;
+	GLuint texChunk = 0;
 
 	ChunkRenderer();
 	~ChunkRenderer();

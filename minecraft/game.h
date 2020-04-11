@@ -3,17 +3,22 @@
 #include <glm/glm.hpp>
 #include "context.h"
 #include "player.h"
-#include "chunk.h"
 #include "chunk_manager.h"
 #include "chunk_renderer.h"
+#include "outline_renderer.h"
+#include "hud_renderer.h"
 #include "camera.h"
+#include "selection.h"
 
 class Game : public Context {
 private:
 	Player player;
 	Camera camera;
+	Selection selection;
 	ChunkManager chunkManager;
 	ChunkRenderer chunkRenderer;
+	OutlineRenderer outlineRenderer;
+	HUDRenderer hudRenderer;
 
 	float mouseSensitivity = 0.001f;
 public:

@@ -5,4 +5,6 @@
 
 namespace TextureLoader {
 	GLuint loadTextureAtlas(std::string filename);
+
+	GLuint loadTexture(std::string filename);
 }

@@ -24,4 +24,16 @@ public:
 		glfwGetFramebufferSize(window, &w, &h);
 		return (float)w / (float)h;
 	}
+
+	int getWidth() {
+		int w, h;
+		glfwGetFramebufferSize(window, &w, &h);
+		return w;
+	}
+
+	int getHeight() {
+		int w, h;
+		glfwGetFramebufferSize(window, &w, &h);
+		return h;
+	}
 };

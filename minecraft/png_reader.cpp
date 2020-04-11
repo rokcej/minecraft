@@ -10,7 +10,7 @@ uint8_t* read_png(const char* filename, int* w, int* h, bool flip_vertically) {
 	// Open file
 	FILE* fp = fopen(filename, "rb");
 	if (!fp) {
-		std::cerr << "Can't open png file" << std::endl;
+		std::cerr << "Can't open png file " << filename << std::endl;
 		return nullptr;
 	}
 	// Read image and return data

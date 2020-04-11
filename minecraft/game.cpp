@@ -11,7 +11,10 @@ Game::Game(GLFWwindow* window) :
 	Context(window),
 	chunkManager(),
 	chunkRenderer(),
-	camera(&player, getAspectRatio())
+	outlineRenderer(),
+	hudRenderer(),
+	camera(&player, getAspectRatio()),
+	selection()
 {}
 
 Game::~Game() {
@@ -20,9 +23,16 @@ Game::~Game() {
 
 void Game::render() {
 	glClearColor(0.f, 0.f, 0.f, 1.f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
+	// Draw Chunks
 	chunkRenderer.render(camera, chunkManager);
+
+	// Draw selection
+	outlineRenderer.render(camera, selection, getHeight());
+
+	// Draw HUD
+	hudRenderer.render(getAspectRatio());
 }
 
 void Game::update(float dt) {
@@ -34,7 +44,7 @@ void Game::update(float dt) {
 	chunkManager.update(&camera);
 
 	// Block selection
-	camera.updateSelection(chunkManager);
+	selection.update(camera, chunkManager);
 }
 
 // Callbacks
@@ -162,15 +172,17 @@ void Game::mouseButtonCallback(GLFWwindow* window, int button, int action, int m
 	switch (button) {
 	case GLFW_MOUSE_BUTTON_LEFT:
 		if (action == GLFW_PRESS) {
-			if (camera.isBlockSelected) {
-				chunkManager.setBlock(camera.selectedBlock, BlockType::AIR);
+			if (selection.isBlockSelected) {
+				chunkManager.setBlock(selection.selectedBlock, BlockType::AIR);
+				selection.update(camera, chunkManager);
 			}
 		}
 		break;
 	case GLFW_MOUSE_BUTTON_RIGHT:
 		if (action == GLFW_PRESS) {
-			if (camera.isBlockSelected && camera.selectedBlock != camera.buildingBlock) {
-				chunkManager.setBlock(camera.buildingBlock, BlockType::SAND);
+			if (selection.isBuildingBlockSelected) {
+				chunkManager.setBlock(selection.buildingBlock, BlockType::SAND);
+				selection.update(camera, chunkManager);
 			}
 		}
 		break;
