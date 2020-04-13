@@ -12,6 +12,8 @@
 
 extern const int neighborsIndices[];
 
+class TerrainGenerator;
+
 class Chunk {
 public:
 	glm::ivec3 pos;
@@ -34,7 +36,7 @@ public:
 
 	bool hasAllNeighbors();
 
-	void generateData(); // Generates chunk data
+	void generateData(TerrainGenerator* terrainGen); // Generates chunk data
 	void generateMesh(); // Generates mesh from data
 	void loadMesh(); // Loads mesh onto GPU
 };

@@ -24,7 +24,7 @@ void Selection::update(const Camera& camera, const ChunkManager& cm) {
 	glm::ivec3 intPosPrev = intPos;
 
 	// Check for blocks that intersect with direction until reaching max distance
-	while (distance < camera.reachDistance) {
+	while (distance < this->reachDistance) {
 		// Check current block
 		if (cm.getBlock(intPos) != BlockType::AIR) {
 			this->isBlockSelected = true;

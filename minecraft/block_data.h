@@ -10,7 +10,8 @@ enum BlockType {
 	STONE,
 	DIRT,
 	GRASS,
-	SAND
+	SAND,
+	WATER
 };
 
 class BlockData {

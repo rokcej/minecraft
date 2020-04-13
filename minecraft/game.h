@@ -9,6 +9,7 @@
 #include "hud_renderer.h"
 #include "camera.h"
 #include "selection.h"
+#include "terrain_generator.h"
 
 class Game : public Context {
 private:
@@ -19,6 +20,7 @@ private:
 	ChunkRenderer chunkRenderer;
 	OutlineRenderer outlineRenderer;
 	HUDRenderer hudRenderer;
+	TerrainGenerator terrainGen;
 
 	float mouseSensitivity = 0.001f;
 public:

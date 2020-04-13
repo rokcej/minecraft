@@ -17,7 +17,8 @@ inline bool isWithinDistance(const glm::ivec3& target, const glm::ivec3& pos, co
 	);
 }
 
-ChunkManager::ChunkManager() :
+ChunkManager::ChunkManager(TerrainGenerator* tg) :
+	terrainGen{ tg },
 	lastChunkPos(1 << 31) // Min integer value
 {
 	initBlockData();
@@ -207,6 +208,7 @@ void chunkLoaderFunc(ChunkManager* cm) {
 			break;
 
 		glm::ivec3 chunkPos = cm->lastChunkPos;
+		TerrainGenerator* terrainGen = cm->terrainGen;
 
 		// Priority queue that loads meshes in order of increasing distance from player
 		auto cmp = [&chunkPos](Chunk* &left, Chunk* &right) {\
@@ -232,7 +234,7 @@ void chunkLoaderFunc(ChunkManager* cm) {
 			dataQueue.pop();
 
 			if (!c->dataGenerated)
-				c->generateData();
+				c->generateData(terrainGen);
 
 			if (isWithinDistance(c->pos, chunkPos, cm->lastRenderDistance))
 				meshQueue.push(c);
@@ -248,5 +250,8 @@ void chunkLoaderFunc(ChunkManager* cm) {
 			c->generateMesh();
 			c->isLoaded = true;
 		}
+
+		// Clear chunk generation cache
+		terrainGen->clearCache();
 	}
 }

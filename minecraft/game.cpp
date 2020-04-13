@@ -9,13 +9,16 @@ constexpr float HALF_PI_LESS = ((float)M_PI_2 * 0.999f);
 
 Game::Game(GLFWwindow* window) :
 	Context(window),
-	chunkManager(),
+	chunkManager(&terrainGen),
 	chunkRenderer(),
 	outlineRenderer(),
 	hudRenderer(),
 	camera(&player, getAspectRatio()),
-	selection()
-{}
+	selection(),
+	terrainGen()
+{
+	player.pos.y = (float)terrainGen.getTerrainData((int)player.pos.x, (int)player.pos.z).height + 1.f;
+}
 
 Game::~Game() {
 
@@ -147,9 +150,9 @@ void Game::keyCallback(GLFWwindow* window, int key, int scancode, int action, in
 		break;
 	case GLFW_KEY_LEFT_SHIFT: // Sprint
 		if (action == GLFW_PRESS)
-			player.speed *= 3;
+			player.speed *= 5;
 		else if (action == GLFW_RELEASE)
-			player.speed /= 3;
+			player.speed /= 5;
 		break;
 	}
 }

@@ -34,4 +34,5 @@ void initBlockData() {
 	blockData[BlockType::DIRT] = BlockData(0, 1);
 	blockData[BlockType::GRASS] = BlockData(0, 3, 0, 2, 0, 1);
 	blockData[BlockType::SAND] = BlockData(0, 4);
+	blockData[BlockType::WATER] = BlockData();
 }

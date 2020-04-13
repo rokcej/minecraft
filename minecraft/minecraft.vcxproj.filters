@@ -66,6 +66,12 @@
     <ClCompile Include="outline_renderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="perlin_noise.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="terrain_generator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="png_reader.h">
@@ -86,16 +92,10 @@
     <ClInclude Include="block_data.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="chunk_manager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="texture_loader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="camera.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="chunk_renderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="collision.h">
@@ -119,7 +119,22 @@
     <ClInclude Include="hud_renderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="chunk_renderer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="outline_renderer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="chunk_manager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="perlin_noise.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="hash.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="terrain_generator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

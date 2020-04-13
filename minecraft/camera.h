@@ -16,8 +16,6 @@ public:
 	// Fog
 	bool enableFog = true; // Enable fog at the edge of render distance
 	int fogDepth = 3; // Fog depth in chunks
-	// Aim
-	float reachDistance = 5.f;
 
 	glm::vec3 relativePos = { 0.f, 1.5f, 0.f };
 	glm::mat4 projMat, viewMat;

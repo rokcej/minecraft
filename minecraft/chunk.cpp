@@ -3,6 +3,7 @@
 #include <math.h>
 #include "block_data.h"
 #include "defines.h"
+#include "terrain_generator.h"
 
 const GLfloat blockVertices[] = { // Block vertices
 	// Left
@@ -37,6 +38,15 @@ const GLfloat blockVertices[] = { // Block vertices
 	0.0f, 1.0f, 1.0f,
 };
 
+const GLfloat blockNormals[] = {
+	-1.f, 0.0f, 0.0f, // Left
+	+1.f, 0.0f, 0.0f, // Right
+	0.0f, -1.f, 0.0f, // Bottom
+	0.0f, +1.f, 0.0f, // Top
+	0.0f, 0.0f, -1.f, // Back
+	0.0f, 0.0f, +1.f  // Front
+};
+
 const GLfloat faceTextureCoordinates[] = { // Block face texture coordinates
 	0.f, 0.f, // Bottom left
 	1.f, 0.f, // Bottom right
@@ -64,11 +74,14 @@ Chunk::Chunk(const glm::ivec3& chunkPos) : pos(chunkPos) {
 	glGenBuffers(1, &ebo);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)0);
+	glEnableVertexAttribArray(0); // Positions
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat), (GLvoid*)0);
 
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+	glEnableVertexAttribArray(1); // Texture coordinates
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+
+	glEnableVertexAttribArray(2); // Normals
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat), (GLvoid*)(6 * sizeof(GLfloat)));
 
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -92,28 +105,18 @@ Chunk::~Chunk() {
 	glDeleteVertexArrays(1, &vao);
 }
 
-void Chunk::generateData() {
+void Chunk::generateData(TerrainGenerator* terrainGen) {
 	/*if (dataGenerated)
 		std::cout << "ERROR: Data already generated" << std::endl;*/
 
+	glm::ivec3 blockPos = pos * CHUNK_SIZE;
+
 	for (int x = 0; x < CHUNK_SIZE; ++x) {
-	for (int y = 0; y < CHUNK_SIZE; ++y) {
-	for (int z = 0; z < CHUNK_SIZE; ++z) {
-		int height = pos.y * CHUNK_SIZE + y + pos.x;
-		int maxHeight = 52;
-		if (pos.x == 0) {
-			data[z][y][x] = BlockType::AIR;
-		} else if (height == maxHeight) {
-			data[z][y][x] = BlockType::GRASS;
-		} else if (height < maxHeight - 32) {
-			data[z][y][x] = BlockType::STONE;
-		} else if (height < maxHeight) {
-			data[z][y][x] = BlockType::DIRT;
-		} else {
-			data[z][y][x] = BlockType::AIR;
+		for (int y = 0; y < CHUNK_SIZE; ++y) {
+			for (int z = 0; z < CHUNK_SIZE; ++z) {
+				data[z][y][x] = terrainGen->generate(blockPos.x + x, blockPos.y + y, blockPos.z + z);
+			}
 		}
-	}
-	}
 	}
 
 	dataGenerated = true;
@@ -165,12 +168,18 @@ void Chunk::generateMesh() {
 
 					// Add vertices
 					for (int j = 0; j < 4; ++j) {
+						// Position
 						vertices.push_back(blockVertices[12 * side + 3 * j + 0] + x_offset);
 						vertices.push_back(blockVertices[12 * side + 3 * j + 1] + y_offset);
 						vertices.push_back(blockVertices[12 * side + 3 * j + 2] + z_offset);
+						// Texture coords
 						vertices.push_back(faceTextureCoordinates[2 * j + 0]);
 						vertices.push_back(faceTextureCoordinates[2 * j + 1]);
 						vertices.push_back(textureIndex);
+						// Normal
+						vertices.push_back(blockNormals[3 * side + 0]);
+						vertices.push_back(blockNormals[3 * side + 1]);
+						vertices.push_back(blockNormals[3 * side + 2]);
 					}
 					// Add indices
 					for (int j = 0; j < 6; ++j) {

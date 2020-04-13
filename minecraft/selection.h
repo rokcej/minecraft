@@ -8,6 +8,8 @@ class Camera;
 
 class Selection {
 public:
+	float reachDistance = 5.f;
+
 	bool isBlockSelected = false;
 	bool isBuildingBlockSelected = false;
 	glm::ivec3 selectedBlock;
