@@ -20,10 +20,10 @@ public:
 	std::atomic<uint8_t> data[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE] = { 0 }; // [z][y][x]
 	Chunk* neighbors[6] = { nullptr }; // -x, +x, -y, +y, -z, +z
 
-	GLuint vao = 0, vbo, ebo;
-	std::vector<GLfloat> vertices;
-	std::vector<GLuint> indices;
-	unsigned int n_indices = 0;
+	GLuint vao[2] = { 0 }, vbo[2], ebo[2];
+	std::vector<GLfloat> vertices[2];
+	std::vector<GLuint> indices[2];
+	unsigned int n_indices[2] = { 0 };
 
 	std::atomic<bool> dataGenerated = false;
 	std::atomic<bool> meshGenerated = false;

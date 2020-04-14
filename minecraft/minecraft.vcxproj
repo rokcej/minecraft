@@ -165,6 +165,7 @@
     <ClCompile Include="terrain_generator.cpp" />
     <ClCompile Include="texture_loader.cpp" />
     <ClCompile Include="timer.cpp" />
+    <ClCompile Include="water_renderer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="block_data.h" />
@@ -188,6 +189,7 @@
     <ClInclude Include="terrain_generator.h" />
     <ClInclude Include="texture_loader.h" />
     <ClInclude Include="timer.h" />
+    <ClInclude Include="water_renderer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

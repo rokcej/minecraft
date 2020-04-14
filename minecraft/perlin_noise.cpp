@@ -87,7 +87,7 @@ glm::vec2 PerlinNoise::getGradient(int x, int y) {
 	auto it = gradientCache.find(key);
 	if (it == gradientCache.end()) { // Gradient not cached yet
 		// Generate gradient while using coordinates as seed
-		rng.seed(ivec2Hash()(glm::ivec2(x, y)));
+		rng.seed((unsigned int)ivec2Hash()(glm::ivec2(x, y)));
 		float angle = distribution(rng);
 		glm::vec2 gradient = glm::vec2(cosf(angle), sinf(angle)) * noise2DAdjust;
 		gradientCache.insert(std::make_pair(key, gradient));

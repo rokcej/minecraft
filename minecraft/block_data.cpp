@@ -7,9 +7,9 @@ bool blockDataInitialized = false;
 
 BlockData blockData[256];
 
-BlockData::BlockData() : BlockData(TEXTURE_ATLAS_WIDTH - 1, TEXTURE_ATLAS_HEIGHT - 1) {}
-BlockData::BlockData(int row, int col) : BlockData(row, col, row, col, row, col) {}
-BlockData::BlockData(int rowSide, int colSide, int rowTop, int colTop, int rowBot, int colBot) {
+BlockData::BlockData(bool transparent) : BlockData(TEXTURE_ATLAS_WIDTH - 1, TEXTURE_ATLAS_HEIGHT - 1, transparent) {}
+BlockData::BlockData(int row, int col, bool transparent) : BlockData(row, col, row, col, row, col, transparent) {}
+BlockData::BlockData(int rowSide, int colSide, int rowTop, int colTop, int rowBot, int colBot, bool transparent) : isTransparent{ transparent } {
 	// Side
 	textureIndices[Side::LEFT] = (float)rowSide * (float)TEXTURE_ATLAS_WIDTH + (float)colSide;
 	textureIndices[Side::RIGHT] = textureIndices[Side::LEFT];
@@ -29,10 +29,10 @@ void initBlockData() {
 	}
 	blockDataInitialized = true;
 
-	blockData[BlockType::AIR] = BlockData();
+	blockData[BlockType::AIR] = BlockData(true);
 	blockData[BlockType::STONE] = BlockData(0, 0);
 	blockData[BlockType::DIRT] = BlockData(0, 1);
 	blockData[BlockType::GRASS] = BlockData(0, 3, 0, 2, 0, 1);
 	blockData[BlockType::SAND] = BlockData(0, 4);
-	blockData[BlockType::WATER] = BlockData();
+	blockData[BlockType::WATER] = BlockData(0, 5, true);
 }

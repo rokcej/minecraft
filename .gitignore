@@ -1,8 +1,13 @@
-## Dependencies
+# Unnecessary files
+*.psd
+
+# Dependencies
 dependencies/
 
-## Visual Studio Code
+# Visual Studio Code
 .vscode/
+
+
 
 ## Visual Studio (https://github.com/github/gitignore/blob/master/VisualStudio.gitignore)
 

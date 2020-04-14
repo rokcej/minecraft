@@ -7,14 +7,23 @@
 #include "camera.h"
 #include "block_data.h"
 #include "defines.h"
+#include "collision.h"
+
+#include <glm/gtx/norm.hpp>
 
 // Check if target is within Manhattan distance of pos
-inline bool isWithinDistance(const glm::ivec3& target, const glm::ivec3& pos, const int distance) {
+bool isWithinSquare(const glm::ivec3& target, const glm::ivec3& pos, const int distance) {
 	return (
 		target.x >= pos.x - distance && target.x <= pos.x + distance &&
 		target.y >= pos.y - distance && target.y <= pos.y + distance &&
 		target.z >= pos.z - distance && target.z <= pos.z + distance
 	);
+}
+bool isWithinSphere(const glm::ivec3& target, const glm::ivec3& pos, const int distance) {
+	glm::vec3 rel = (glm::vec3)(target - pos);
+	float len2 = rel.x * rel.x + rel.y * rel.y + rel.z * rel.z;
+	float dist2 = (float)((distance + 1) * (distance + 1));
+	return len2 < dist2 - 0.0001f;
 }
 
 ChunkManager::ChunkManager(TerrainGenerator* tg) :
@@ -41,24 +50,67 @@ ChunkManager::~ChunkManager() {
 		it = deleteChunk(it);
 }
 
-void ChunkManager::update(Camera* camera) {
+void ChunkManager::update(const Camera& camera) {
 	// TODO:
 	// 1) Limit the number of chunks created, loaded and deleted per frame
 	// 2) Create and load chunks radially, so that chunks nearest to the player are loaded first
 	// 
 
-	glm::ivec3 chunkPos = blockToChunkPos(camera->getPos()); // Current position in chunk coordinates
+	glm::ivec3 chunkPos = blockToChunkPos(camera.getPos()); // Current position in chunk coordinates
+
+	// Reset list
+	renderList.clear();
+
+	// Generate new chunks
+	if (chunkPos != lastChunkPos || camera.renderDistance != lastRenderDistance) {
+		int generateDistance = camera.renderDistance + 1;
+
+		// Put newly created chunks in shared queue
+		std::unique_lock<std::mutex> mutexLock(chunkLoaderMutex);
+
+		lastChunkPos = chunkPos;
+		lastRenderDistance = camera.renderDistance;
+
+		for (int x = chunkPos.x - generateDistance; x <= chunkPos.x + generateDistance; ++x) {
+			for (int y = chunkPos.y - generateDistance; y <= chunkPos.y + generateDistance; ++y) {
+				for (int z = chunkPos.z - generateDistance; z <= chunkPos.z + generateDistance; ++z) {
+					glm::ivec3 pos(x, y, z);
+					Chunk* c = getChunk(pos);
+					if (c == nullptr) {
+						c = createChunk(pos);
+						chunkLoaderQueue.push(c);
+					} else {
+						if (c->isLoaded && !c->meshGenerated && isWithinSphere(c->pos, chunkPos, camera.renderDistance)) {
+							c->isLoaded = false;
+							chunkLoaderQueue.push(c);
+						}
+					}
+				}
+			}
+		}
+
+		mutexLock.unlock();
+		chunkLoaderCondition.notify_all();
+	}
 
 	// Process existing chunks
+	Frustum frustum(camera);
 	for (auto it = chunks.begin(); it != chunks.end(); /* No increment */) {
 		Chunk* c = it->second;
 		if (c->isLoaded) { // Make sure chunk isn't being processed by secondary thread
-			if (isWithinDistance(c->pos, chunkPos, camera->renderDistance)) { // Chunk in render distance
+			if (isWithinSphere(c->pos, chunkPos, camera.renderDistance)) { // Chunk in render distance
 				// Load mesh
 				if (c->meshGenerated && !c->meshLoaded) {
 					c->loadMesh();
 				}
-			} else if (!isWithinDistance(c->pos, chunkPos, camera->renderDistance + 2)) { // Chunk outside render distance + 2
+				// Add to render queue
+				if (c->meshLoaded) {
+					AABB aabb(c);
+					if (frustum.intersects(aabb)) {
+						renderList.push_back(c);
+					}
+				}
+			} else if (!isWithinSquare(c->pos, chunkPos, camera.renderDistance + 2)) { // Chunk outside render distance + 2
 				// Delete chunk if possible
 				bool safeToDelete = true;
 				for (int side = 0; side < 6; ++side) {
@@ -76,38 +128,6 @@ void ChunkManager::update(Camera* camera) {
 		}
 		// Increment iterator
 		++it;
-	}
-
-	if (chunkPos != lastChunkPos || camera->renderDistance != lastRenderDistance) {
-		// Generate new chunks
-		int generateDistance = camera->renderDistance + 1;
-
-		// Put newly created chunks in shared queue
-		std::unique_lock<std::mutex> mutexLock(chunkLoaderMutex);
-
-		lastChunkPos = chunkPos;
-		lastRenderDistance = camera->renderDistance;
-
-		for (int x = chunkPos.x - generateDistance; x <= chunkPos.x + generateDistance; ++x) {
-			for (int y = chunkPos.y - generateDistance; y <= chunkPos.y + generateDistance; ++y) {
-				for (int z = chunkPos.z - generateDistance; z <= chunkPos.z + generateDistance; ++z) {
-					glm::ivec3 pos(x, y, z);
-					Chunk* c = getChunk(pos);
-					if (c == nullptr) {
-						c = createChunk(pos);
-						chunkLoaderQueue.push(c);
-					} else {
-						if (c->isLoaded && !c->meshGenerated && isWithinDistance(c->pos, chunkPos, camera->renderDistance)) {
-							c->isLoaded = false;
-							chunkLoaderQueue.push(c);
-						}
-					}
-				}
-			}
-		}
-
-		mutexLock.unlock();
-		chunkLoaderCondition.notify_all();
 	}
 }
 
@@ -236,7 +256,7 @@ void chunkLoaderFunc(ChunkManager* cm) {
 			if (!c->dataGenerated)
 				c->generateData(terrainGen);
 
-			if (isWithinDistance(c->pos, chunkPos, cm->lastRenderDistance))
+			if (isWithinSphere(c->pos, chunkPos, cm->lastRenderDistance))
 				meshQueue.push(c);
 			else
 				c->isLoaded = true;

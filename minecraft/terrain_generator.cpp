@@ -14,7 +14,7 @@ int TerrainGenerator::generate(int x, int y, int z) {
 	int height = data.height;
 	int offset = data.offset;
 
-	int grassHeight = 55 + offset;
+	int grassHeight = 65 + offset;
 	int waterHeight = 35;
 
 	if (y > height) {
@@ -40,7 +40,7 @@ TerrainData TerrainGenerator::getTerrainData(int x, int z) {
 		// Generate terrain data
 		TerrainData data;
 		data.height = (int)(powf(perlinNoise.noise(x, z, 256, 6), 1.5f) * maxHeight);
-		data.offset = (int)(perlinNoise.noise(x, z, 32, 3) * 48.f);
+		data.offset = (int)(perlinNoise.noise(x, z, 16, 3) * 64.f);
 		// Cache generated value
 		terrainCache.insert(std::make_pair(key, data));
 		return data;

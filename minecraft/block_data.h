@@ -16,12 +16,14 @@ enum BlockType {
 
 class BlockData {
 public:
+	// Block parameters
+	bool isTransparent;
 	// Block textures
 	float textureIndices[6];
 
-	BlockData();
-	BlockData(int row, int col);
-	BlockData(int rowSide, int colSide, int rowTop, int colTop, int rowBot, int colBot);
+	BlockData(bool transparent = false);
+	BlockData(int row, int col, bool transparent = false);
+	BlockData(int rowSide, int colSide, int rowTop, int colTop, int rowBot, int colBot, bool transparent = false);
 };
 
 extern BlockData blockData[TEXTURE_ATLAS_WIDTH * TEXTURE_ATLAS_HEIGHT];

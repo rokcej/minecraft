@@ -17,6 +17,8 @@ using ChunkMap = std::unordered_map<glm::ivec3, Chunk*, ivec3Hash>;
 
 class ChunkManager {
 public:
+	std::vector<Chunk*> renderList;
+
 	ChunkMap chunks;
 	TerrainGenerator* terrainGen;
 
@@ -34,7 +36,7 @@ public:
 	ChunkManager(TerrainGenerator* tg);
 	~ChunkManager();
 
-	void update(Camera* camera);
+	void update(const Camera& camera);
 
 	Chunk* getChunk(const glm::ivec3& chunkPos) const;
 	int getBlock(const glm::ivec3& blockPos) const;

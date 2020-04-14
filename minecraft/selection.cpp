@@ -26,7 +26,8 @@ void Selection::update(const Camera& camera, const ChunkManager& cm) {
 	// Check for blocks that intersect with direction until reaching max distance
 	while (distance < this->reachDistance) {
 		// Check current block
-		if (cm.getBlock(intPos) != BlockType::AIR) {
+		int blockType = cm.getBlock(intPos);
+		if (blockType != BlockType::AIR && blockType != BlockType::WATER) {
 			this->isBlockSelected = true;
 			this->selectedBlock = intPos;
 			if (intPosPrev != intPos) {

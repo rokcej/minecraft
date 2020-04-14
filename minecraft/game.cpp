@@ -12,6 +12,7 @@ Game::Game(GLFWwindow* window) :
 	chunkManager(&terrainGen),
 	chunkRenderer(),
 	outlineRenderer(),
+	waterRenderer(),
 	hudRenderer(),
 	camera(&player, getAspectRatio()),
 	selection(),
@@ -34,6 +35,9 @@ void Game::render() {
 	// Draw selection
 	outlineRenderer.render(camera, selection, getHeight());
 
+	// Draw water
+	waterRenderer.render(camera, chunkManager);
+
 	// Draw HUD
 	hudRenderer.render(getAspectRatio());
 }
@@ -44,7 +48,7 @@ void Game::update(float dt) {
 	camera.updateViewMat();
 
 	// Chunks
-	chunkManager.update(&camera);
+	chunkManager.update(camera);
 
 	// Block selection
 	selection.update(camera, chunkManager);

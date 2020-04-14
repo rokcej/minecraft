@@ -65,23 +65,24 @@ const int neighborsIndices[] = {
 };
 
 Chunk::Chunk(const glm::ivec3& chunkPos) : pos(chunkPos) {
-	glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
+	glGenVertexArrays(2, vao);
+	glGenBuffers(2, vbo);
+	glGenBuffers(2, ebo);
 
-	glGenBuffers(1, &vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	for (int i = 0; i < 2; ++i) {
+		glBindVertexArray(vao[i]);
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[i]);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo[i]);
 
-	glGenBuffers(1, &ebo);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+		glEnableVertexAttribArray(0); // Positions
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat), (GLvoid*)0);
 
-	glEnableVertexAttribArray(0); // Positions
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat), (GLvoid*)0);
+		glEnableVertexAttribArray(1); // Texture coordinates
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
 
-	glEnableVertexAttribArray(1); // Texture coordinates
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
-
-	glEnableVertexAttribArray(2); // Normals
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat), (GLvoid*)(6 * sizeof(GLfloat)));
+		glEnableVertexAttribArray(2); // Normals
+		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat), (GLvoid*)(6 * sizeof(GLfloat)));
+	}
 
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -98,11 +99,9 @@ Chunk::~Chunk() {
 		}
 	}
 	// Delete data
-	vertices.clear();
-	indices.clear();
-	glDeleteBuffers(1, &vbo);
-	glDeleteBuffers(1, &ebo);
-	glDeleteVertexArrays(1, &vao);
+	glDeleteBuffers(2, vbo);
+	glDeleteBuffers(2, ebo);
+	glDeleteVertexArrays(2, vao);
 }
 
 void Chunk::generateData(TerrainGenerator* terrainGen) {
@@ -128,11 +127,13 @@ void Chunk::generateMesh() {
 	if (meshGenerated)
 		std::cout << "ERROR: Mesh already generated" << std::endl;*/
 
-	vertices.clear();
-	indices.clear();
+	for (int i = 0; i < 2; ++i) {
+		vertices[i].clear();
+		indices[i].clear();
+	}
 
 	// Generate vertices and indices
-	int index_offset = 0;
+	int index_offset[2] = { 0 };
 	for (int x = 0; x < CHUNK_SIZE; ++x) {
 	for (int y = 0; y < CHUNK_SIZE; ++y) {
 	for (int z = 0; z < CHUNK_SIZE; ++z) {
@@ -147,45 +148,92 @@ void Chunk::generateMesh() {
 				int xn = x + neighborsIndices[3 * side + 0];
 				int yn = y + neighborsIndices[3 * side + 1];
 				int zn = z + neighborsIndices[3 * side + 2];
+				Chunk* cn = this;
 
-				uint8_t neighborType = BlockType::AIR;
+				uint8_t neighborType;
 				if (xn < 0 || xn >= CHUNK_SIZE || yn < 0 || yn >= CHUNK_SIZE || zn < 0 || zn >= CHUNK_SIZE) {
-					if (neighbors[side] != nullptr && neighbors[side]->dataGenerated) {
-						int xn2 = xn - neighborsIndices[3 * side + 0] * CHUNK_SIZE;
-						int yn2 = yn - neighborsIndices[3 * side + 1] * CHUNK_SIZE;
-						int zn2 = zn - neighborsIndices[3 * side + 2] * CHUNK_SIZE;
-						neighborType = neighbors[side]->data[zn2][yn2][xn2];
-					}/* else {
+					//if (neighbors[side] != nullptr && neighbors[side]->dataGenerated) {
+						xn -= neighborsIndices[3 * side + 0] * CHUNK_SIZE;
+						yn -= neighborsIndices[3 * side + 1] * CHUNK_SIZE;
+						zn -= neighborsIndices[3 * side + 2] * CHUNK_SIZE;
+						cn = neighbors[side];
+
+						neighborType = cn->data[zn][yn][xn];
+					//}
+					/* else {
 						std::cout << "ERROR: Can't create mesh because neighbor data is missing" << std::endl;
 					}*/
 				} else {
 					neighborType = data[zn][yn][xn];
 				}
 
-				if (neighborType == BlockType::AIR) {
-					// Texture coordinates
-					float textureIndex = blockData[blockType].textureIndices[side];
+				if (blockType == BlockType::WATER) {
+					// Water
+					if (neighborType != BlockType::WATER && (blockData[neighborType].isTransparent || side == Side::TOP)) {
+						// Texture coordinates
+						float textureIndex = blockData[blockType].textureIndices[side];
 
-					// Add vertices
-					for (int j = 0; j < 4; ++j) {
-						// Position
-						vertices.push_back(blockVertices[12 * side + 3 * j + 0] + x_offset);
-						vertices.push_back(blockVertices[12 * side + 3 * j + 1] + y_offset);
-						vertices.push_back(blockVertices[12 * side + 3 * j + 2] + z_offset);
-						// Texture coords
-						vertices.push_back(faceTextureCoordinates[2 * j + 0]);
-						vertices.push_back(faceTextureCoordinates[2 * j + 1]);
-						vertices.push_back(textureIndex);
-						// Normal
-						vertices.push_back(blockNormals[3 * side + 0]);
-						vertices.push_back(blockNormals[3 * side + 1]);
-						vertices.push_back(blockNormals[3 * side + 2]);
+						// Spaghetti code for water height
+						uint8_t topNeighbor;
+						if (y + 1 < CHUNK_SIZE)
+							topNeighbor = data[z][y + 1][x];
+						else
+							topNeighbor = neighbors[Side::TOP]->data[z][y + 1 - CHUNK_SIZE][x];
+						float waterHeight = 1.f;
+						if (topNeighbor != BlockType::WATER)
+							waterHeight = .8f;
+
+						// Add vertices
+						for (int j = 0; j < 4; ++j) {
+							// Position
+							vertices[1].push_back(blockVertices[12 * side + 3 * j + 0] + x_offset);
+							vertices[1].push_back(waterHeight * blockVertices[12 * side + 3 * j + 1] + y_offset);
+							vertices[1].push_back(blockVertices[12 * side + 3 * j + 2] + z_offset);
+							// Texture coords
+							vertices[1].push_back(faceTextureCoordinates[2 * j + 0]);
+							if (side == Side::TOP || side == Side::BOT)
+								vertices[1].push_back(faceTextureCoordinates[2 * j + 1]);
+							else
+								vertices[1].push_back(waterHeight * faceTextureCoordinates[2 * j + 1]);
+							vertices[1].push_back(textureIndex);
+							// Normal
+							vertices[1].push_back(blockNormals[3 * side + 0]);
+							vertices[1].push_back(blockNormals[3 * side + 1]);
+							vertices[1].push_back(blockNormals[3 * side + 2]);
+						}
+						// Add indices
+						for (int j = 0; j < 6; ++j) {
+							indices[1].push_back(faceIndices[j] + index_offset[1]);
+						}
+						index_offset[1] += 4;
 					}
-					// Add indices
-					for (int j = 0; j < 6; ++j) {
-						indices.push_back(faceIndices[j] + index_offset);
+				} else {
+					// Non-water
+					if (blockData[neighborType].isTransparent) {
+						// Texture coordinates
+						float textureIndex = blockData[blockType].textureIndices[side];
+
+						// Add vertices
+						for (int j = 0; j < 4; ++j) {
+							// Position
+							vertices[0].push_back(blockVertices[12 * side + 3 * j + 0] + x_offset);
+							vertices[0].push_back(blockVertices[12 * side + 3 * j + 1] + y_offset);
+							vertices[0].push_back(blockVertices[12 * side + 3 * j + 2] + z_offset);
+							// Texture coords
+							vertices[0].push_back(faceTextureCoordinates[2 * j + 0]);
+							vertices[0].push_back(faceTextureCoordinates[2 * j + 1]);
+							vertices[0].push_back(textureIndex);
+							// Normal
+							vertices[0].push_back(blockNormals[3 * side + 0]);
+							vertices[0].push_back(blockNormals[3 * side + 1]);
+							vertices[0].push_back(blockNormals[3 * side + 2]);
+						}
+						// Add indices
+						for (int j = 0; j < 6; ++j) {
+							indices[0].push_back(faceIndices[j] + index_offset[0]);
+						}
+						index_offset[0] += 4;
 					}
-					index_offset += 4;
 				}
 			}
 		}
@@ -203,19 +251,21 @@ void Chunk::loadMesh() {
 		std::cout << "ERROR: Mesh already loaded" << std::endl;*/
 
 	// Put vertices and indices in vbo and ebo
-	glBindVertexArray(vao);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+	for (int i = 0; i < 2; ++i) {
+		glBindVertexArray(vao[i]);
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[i]);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo[i]);
 
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(GLfloat), vertices.data(), GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, vertices[i].size() * sizeof(GLfloat), vertices[i].data(), GL_STATIC_DRAW);
 
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), indices.data(), GL_STATIC_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices[i].size() * sizeof(GLuint), indices[i].data(), GL_STATIC_DRAW);
 
-	glBindVertexArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		glBindVertexArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-	n_indices = (unsigned int)indices.size();
+		n_indices[i] = (unsigned int)indices[i].size();
+	}
 
 	meshLoaded = true;
 }

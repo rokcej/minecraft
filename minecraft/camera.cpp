@@ -20,7 +20,7 @@ Camera::Camera(Player* entity, float aspectRatio) :
 
 void Camera::setRenderDistance(int renderDistance) {
 	this->renderDistance = renderDistance;
-	this->farDistance = (float)((renderDistance + 1) * CHUNK_SIZE) * sqrtf(3);
+	this->farDistance = (float)((renderDistance + 2) * CHUNK_SIZE);
 	this->updateProjMat();
 }
 void Camera::setFieldOfView(float fieldOfView) {
