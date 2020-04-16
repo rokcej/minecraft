@@ -24,7 +24,8 @@ public:
 
 	// Last updated position and render distance
 	glm::ivec3 lastChunkPos;
-	int lastRenderDistance = -1;
+	bool lastPosLoaded = true;
+	int lastRenderDistance = 0;
 
 	// Multithreading
 	std::atomic<bool> chunkLoaderIsRunning = false;
@@ -32,6 +33,8 @@ public:
 	std::queue<Chunk*> chunkLoaderQueue;
 	std::mutex chunkLoaderMutex;
 	std::condition_variable chunkLoaderCondition;
+	glm::ivec3 chunkLoaderPos;
+	int chunkLoaderDistance = 0;
 
 	ChunkManager(TerrainGenerator* tg);
 	~ChunkManager();
@@ -43,8 +46,9 @@ public:
 
 	void setBlock(const glm::ivec3& blockPos, int blockType);
 
+private:
 	Chunk* createChunk(const glm::ivec3& chunkPos);
-	ChunkMap::iterator deleteChunk(ChunkMap::iterator it);
+	ChunkMap::iterator deleteChunk(const ChunkMap::iterator& it);
 };
 
 void chunkLoaderFunc(ChunkManager* chunkManager);

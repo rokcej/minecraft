@@ -43,3 +43,4 @@ public:
 
 glm::ivec3 blockToChunkPos(const glm::vec3& blockPos);
 bool isLegalBlockPos(const glm::ivec3& pos);
+glm::ivec3 getNeighborPos(const int side, const glm::ivec3& pos);

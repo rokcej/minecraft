@@ -64,6 +64,12 @@ const int neighborsIndices[] = {
 	0, 0, -1, 0, 0, +1  // Back, front (-z, +z)
 };
 
+const int neighborIndexMap[][6] = {
+	// Left, right, bottom, top, back, front
+	{ 0, 0, 1, 1, 2, 2 }, // Dimension index
+	{ -1, +1, -1, +1, -1, +1 } // Dimension offset
+};
+
 Chunk::Chunk(const glm::ivec3& chunkPos) : pos(chunkPos) {
 	glGenVertexArrays(2, vao);
 	glGenBuffers(2, vbo);
@@ -134,40 +140,34 @@ void Chunk::generateMesh() {
 
 	// Generate vertices and indices
 	int index_offset[2] = { 0 };
-	for (int x = 0; x < CHUNK_SIZE; ++x) {
-	for (int y = 0; y < CHUNK_SIZE; ++y) {
-	for (int z = 0; z < CHUNK_SIZE; ++z) {
-		uint8_t blockType = data[z][y][x];
+	glm::ivec3 ip;
+	for (ip.x = 0; ip.x < CHUNK_SIZE; ++ip.x) {
+	for (ip.y = 0; ip.y < CHUNK_SIZE; ++ip.y) {
+	for (ip.z = 0; ip.z < CHUNK_SIZE; ++ip.z) {
+		uint8_t blockType = data[ip.z][ip.y][ip.x]; // Get current block type
 
 		if (blockType != BlockType::AIR) {
-			GLfloat x_offset = (GLfloat)(x + pos.x * CHUNK_SIZE);
-			GLfloat y_offset = (GLfloat)(y + pos.y * CHUNK_SIZE);
-			GLfloat z_offset = (GLfloat)(z + pos.z * CHUNK_SIZE);
+			glm::vec3 offset = (glm::vec3)(ip + pos * CHUNK_SIZE); // Get current block's absolute position
 
 			for (int side = 0; side < 6; ++side) {
-				int xn = x + neighborsIndices[3 * side + 0];
-				int yn = y + neighborsIndices[3 * side + 1];
-				int zn = z + neighborsIndices[3 * side + 2];
-				Chunk* cn = this;
+				// Find neighboring block's position and chunk (can be either the same chunk or neighboring chunk)
+				// We assume the neighboring chunk always exists
+				glm::ivec3 ipn = getNeighborPos(side, ip);
+				Chunk* cn;
 
-				uint8_t neighborType;
-				if (xn < 0 || xn >= CHUNK_SIZE || yn < 0 || yn >= CHUNK_SIZE || zn < 0 || zn >= CHUNK_SIZE) {
-					//if (neighbors[side] != nullptr && neighbors[side]->dataGenerated) {
-						xn -= neighborsIndices[3 * side + 0] * CHUNK_SIZE;
-						yn -= neighborsIndices[3 * side + 1] * CHUNK_SIZE;
-						zn -= neighborsIndices[3 * side + 2] * CHUNK_SIZE;
-						cn = neighbors[side];
-
-						neighborType = cn->data[zn][yn][xn];
-					//}
-					/* else {
-						std::cout << "ERROR: Can't create mesh because neighbor data is missing" << std::endl;
-					}*/
+				int dimIndex = neighborIndexMap[0][side]; // Which dimension is the neighbor in
+				int dimDirection = neighborIndexMap[1][side]; // Which direction in the dimension is the neighbor in
+				if (ipn[dimIndex] < 0 || ipn[dimIndex] >= CHUNK_SIZE) {
+					ipn[dimIndex] -= dimDirection * CHUNK_SIZE;
+					cn = neighbors[side];
 				} else {
-					neighborType = data[zn][yn][xn];
+					cn = this;
 				}
 
-				if (blockType == BlockType::WATER) {
+				// Get neighboring block type
+				uint8_t neighborType = cn->data[ipn.z][ipn.y][ipn.x];
+
+				if (blockType == BlockType::WATER) { // Create water mesh
 					// Water
 					if (neighborType != BlockType::WATER && (blockData[neighborType].isTransparent || side == Side::TOP)) {
 						// Texture coordinates
@@ -175,10 +175,10 @@ void Chunk::generateMesh() {
 
 						// Spaghetti code for water height
 						uint8_t topNeighbor;
-						if (y + 1 < CHUNK_SIZE)
-							topNeighbor = data[z][y + 1][x];
+						if (ip.y + 1 < CHUNK_SIZE)
+							topNeighbor = data[ip.z][ip.y + 1][ip.x];
 						else
-							topNeighbor = neighbors[Side::TOP]->data[z][y + 1 - CHUNK_SIZE][x];
+							topNeighbor = neighbors[Side::TOP]->data[ip.z][ip.y + 1 - CHUNK_SIZE][ip.x];
 						float waterHeight = 1.f;
 						if (topNeighbor != BlockType::WATER)
 							waterHeight = .8f;
@@ -186,9 +186,9 @@ void Chunk::generateMesh() {
 						// Add vertices
 						for (int j = 0; j < 4; ++j) {
 							// Position
-							vertices[1].push_back(blockVertices[12 * side + 3 * j + 0] + x_offset);
-							vertices[1].push_back(waterHeight * blockVertices[12 * side + 3 * j + 1] + y_offset);
-							vertices[1].push_back(blockVertices[12 * side + 3 * j + 2] + z_offset);
+							vertices[1].push_back(blockVertices[12 * side + 3 * j + 0] + offset.x);
+							vertices[1].push_back(waterHeight * blockVertices[12 * side + 3 * j + 1] + offset.y);
+							vertices[1].push_back(blockVertices[12 * side + 3 * j + 2] + offset.z);
 							// Texture coords
 							vertices[1].push_back(faceTextureCoordinates[2 * j + 0]);
 							if (side == Side::TOP || side == Side::BOT)
@@ -207,7 +207,7 @@ void Chunk::generateMesh() {
 						}
 						index_offset[1] += 4;
 					}
-				} else {
+				} else { // Create chunk mesh
 					// Non-water
 					if (blockData[neighborType].isTransparent) {
 						// Texture coordinates
@@ -216,9 +216,9 @@ void Chunk::generateMesh() {
 						// Add vertices
 						for (int j = 0; j < 4; ++j) {
 							// Position
-							vertices[0].push_back(blockVertices[12 * side + 3 * j + 0] + x_offset);
-							vertices[0].push_back(blockVertices[12 * side + 3 * j + 1] + y_offset);
-							vertices[0].push_back(blockVertices[12 * side + 3 * j + 2] + z_offset);
+							vertices[0].push_back(blockVertices[12 * side + 3 * j + 0] + offset.x);
+							vertices[0].push_back(blockVertices[12 * side + 3 * j + 1] + offset.y);
+							vertices[0].push_back(blockVertices[12 * side + 3 * j + 2] + offset.z);
 							// Texture coords
 							vertices[0].push_back(faceTextureCoordinates[2 * j + 0]);
 							vertices[0].push_back(faceTextureCoordinates[2 * j + 1]);
@@ -285,4 +285,10 @@ glm::ivec3 blockToChunkPos(const glm::vec3& blockPos) {
 
 bool isLegalBlockPos(const glm::ivec3& pos) {
 	return pos.x >= 0 && pos.x < CHUNK_SIZE && pos.y >= 0 && pos.y < CHUNK_SIZE && pos.z >= 0 && pos.z < CHUNK_SIZE;
+}
+
+glm::ivec3 getNeighborPos(const int side, const glm::ivec3& pos) {
+	glm::ivec3 neighborPos = pos;
+	neighborPos[neighborIndexMap[0][side]] += neighborIndexMap[1][side];
+	return neighborPos;
 }

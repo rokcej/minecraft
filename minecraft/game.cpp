@@ -67,14 +67,6 @@ void Game::keyCallback(GLFWwindow* window, int key, int scancode, int action, in
 			camera.thirdPerson = !camera.thirdPerson;
 		}
 		break;
-	/// Chunks
-	case GLFW_KEY_R:
-		if (action == GLFW_PRESS) { // Reload chunks
-			for (auto it = chunkManager.chunks.begin(); it != chunkManager.chunks.end(); )
-				it = chunkManager.deleteChunk(it);
-			chunkManager.lastChunkPos = glm::ivec3(1 < 31);
-		}
-		break;
 	/// Fog
 	case GLFW_KEY_F:
 		if (action == GLFW_PRESS) { // Toggle fog
@@ -154,9 +146,9 @@ void Game::keyCallback(GLFWwindow* window, int key, int scancode, int action, in
 		break;
 	case GLFW_KEY_LEFT_SHIFT: // Sprint
 		if (action == GLFW_PRESS)
-			player.speed *= 5;
+			player.speed *= 4;
 		else if (action == GLFW_RELEASE)
-			player.speed /= 5;
+			player.speed /= 4;
 		break;
 	}
 }
