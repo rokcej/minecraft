@@ -29,8 +29,6 @@ ChunkManager::ChunkManager(TerrainGenerator* tg) :
 	terrainGen{ tg },
 	lastChunkPos(1 << 31) // Min integer value
 {
-	initBlockData();
-
 	// Spawn chunk loader thread
 	chunkLoaderIsRunning = true;
 	chunkLoaderThread = std::thread(chunkLoaderFunc, this);

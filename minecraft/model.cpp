@@ -1,5 +1,7 @@
 #include "model.h"
 
+#include <iostream>
+
 GLfloat indexedBlockVertices[] {
 	0.f, 0.f, 0.f,
 	1.f, 0.f, 0.f,
@@ -29,18 +31,27 @@ GLuint blockLineIndices[]{
 	4, 5, 5, 7, 7, 6, 6, 4  // Front
 };
 
-Model::Model() {
-	glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
+namespace Meshes {
+	Mesh* blockOutline;
+};
 
-	glGenBuffers(1, &vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+bool meshDataInitialized = false;
 
-	glGenBuffers(1, &ebo);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+void initMeshData() {
+	if (meshDataInitialized) {
+		std::cout << "Block data already initialized!" << std::endl;
+		return;
+	}
+	meshDataInitialized = true;
+
+
+	// Block outline
+	Meshes::blockOutline = new Mesh();
+	glBindVertexArray(Meshes::blockOutline->vao);
+	glBindBuffer(GL_ARRAY_BUFFER, Meshes::blockOutline->vbo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Meshes::blockOutline->ebo);
 
 	glBufferData(GL_ARRAY_BUFFER, sizeof(indexedBlockVertices), indexedBlockVertices, GL_STATIC_DRAW);
-
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(blockLineIndices), blockLineIndices, GL_STATIC_DRAW);
 
 	glEnableVertexAttribArray(0);
@@ -50,11 +61,25 @@ Model::Model() {
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-	n_indices = sizeof(blockLineIndices) / sizeof(GLuint);
+	Meshes::blockOutline->n_indices = sizeof(blockLineIndices) / sizeof(GLuint);
 }
 
-Model::~Model() {
+Mesh::Mesh() {
+	glGenVertexArrays(1, &vao);
+	glGenBuffers(1, &vbo);
+	glGenBuffers(1, &ebo);
+}
+
+Mesh::~Mesh() {
 	glDeleteBuffers(1, &vbo);
 	glDeleteBuffers(1, &ebo);
 	glDeleteVertexArrays(1, &vao);
+}
+
+Model::Model(Mesh* mesh) : mesh{ mesh } {
+
+}
+
+Model::~Model() {
+
 }

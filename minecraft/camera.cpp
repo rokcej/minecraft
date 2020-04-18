@@ -48,7 +48,7 @@ float Camera::getFarDistance() const {
 void Camera::updateViewMat() {
 	if (thirdPerson) {
 		viewMat = glm::lookAt(
-			getPos() - getForward() * 64.f,
+			getPos() - getForward() * 16.f,
 			getPos() + getForward(),
 			getUp()
 		);

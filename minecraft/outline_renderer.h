@@ -14,5 +14,5 @@ public:
 	OutlineRenderer();
 	~OutlineRenderer();
 
-	void render(const Camera& camera, const Selection& selection, int height);
+	void render(const Camera& camera, const Selection& selection, int framebufferHeight);
 };

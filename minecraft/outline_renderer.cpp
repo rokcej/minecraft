@@ -15,16 +15,16 @@ OutlineRenderer::~OutlineRenderer() {
 	glDeleteProgram(progOutline);
 }
 
-void OutlineRenderer::render(const Camera& camera, const Selection& selection, int height) {
+void OutlineRenderer::render(const Camera& camera, const Selection& selection, int framebufferHeight) {
 	if (selection.isBlockSelected) {
 		glm::vec3 offset = -0.001f * camera.getForward();
-		glm::mat4 pvmMat = camera.projMat * camera.viewMat * glm::translate(selection.transMat, offset);
+		glm::mat4 pvmMat = camera.projMat * camera.viewMat * glm::translate(selection.outlineModel.modelMat, offset);
 
 		glUseProgram(progOutline);
 		glUniformMatrix4fv(glGetUniformLocation(progOutline, "uPVM"), 1, GL_FALSE, glm::value_ptr(pvmMat));
-		glBindVertexArray(selection.blockModel.vao);
+		glBindVertexArray(selection.outlineModel.mesh->vao);
 
-		glLineWidth((float)height * outlineSize);
-		glDrawElements(GL_LINES, selection.blockModel.n_indices, GL_UNSIGNED_INT, 0);
+		glLineWidth((float)framebufferHeight * outlineSize);
+		glDrawElements(GL_LINES, selection.outlineModel.mesh->n_indices, GL_UNSIGNED_INT, 0);
 	}
 }

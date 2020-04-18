@@ -6,6 +6,7 @@
 #include "chunk_manager.h"
 #include "chunk_renderer.h"
 #include "outline_renderer.h"
+#include "player_renderer.h"
 #include "water_renderer.h"
 #include "hud_renderer.h"
 #include "camera.h"
@@ -20,6 +21,7 @@ private:
 	ChunkManager chunkManager;
 	ChunkRenderer chunkRenderer;
 	OutlineRenderer outlineRenderer;
+	PlayerRenderer playerRenderer;
 	WaterRenderer waterRenderer;
 	HUDRenderer hudRenderer;
 	TerrainGenerator terrainGen;

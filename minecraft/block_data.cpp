@@ -30,9 +30,9 @@ void initBlockData() {
 	blockDataInitialized = true;
 
 	blockData[BlockType::AIR] = BlockData(true);
-	blockData[BlockType::STONE] = BlockData(0, 0);
-	blockData[BlockType::DIRT] = BlockData(0, 1);
-	blockData[BlockType::GRASS] = BlockData(0, 3, 0, 2, 0, 1);
-	blockData[BlockType::SAND] = BlockData(0, 4);
-	blockData[BlockType::WATER] = BlockData(0, 5, true);
+	blockData[BlockType::STONE] = BlockData(0, 1);
+	blockData[BlockType::DIRT] = BlockData(0, 2);
+	blockData[BlockType::GRASS] = BlockData(0, 3, 0, 0, 0, 2);
+	blockData[BlockType::SAND] = BlockData(1, 2);
+	blockData[BlockType::WATER] = BlockData(13, 15, true);
 }

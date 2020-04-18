@@ -1,16 +1,30 @@
 #pragma once
 
 #include <GL/glew.h>
+#include <glm/glm.hpp>
+
+class Mesh {
+public:
+	GLuint vao = 0;
+	GLuint vbo = 0;
+	GLuint ebo = 0;
+	unsigned int n_indices = 0;
+
+	Mesh();
+	~Mesh();
+};
 
 class Model {
 public:
-	GLuint vao = 0;
-	unsigned int n_indices;
+	Mesh* mesh = nullptr;
+	glm::mat4 modelMat = glm::mat4(1.f);
 
-	Model();
+	Model(Mesh* mesh);
 	~Model();
-
-private:
-	GLuint vbo = 0;
-	GLuint ebo = 0;
 };
+
+namespace Meshes {
+	extern Mesh* blockOutline;
+};
+
+void initMeshData();

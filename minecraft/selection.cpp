@@ -7,8 +7,7 @@
 #include "camera.h"
 #include "chunk_manager.h"
 
-Selection::Selection() : selectedBlock(0), buildingBlock(0), blockModel() {
-	transMat = glm::mat4(1.f);
+Selection::Selection() : selectedBlock(0), buildingBlock(0), outlineModel(Meshes::blockOutline) {
 }
 
 void Selection::update(const Camera& camera, const ChunkManager& cm) {
@@ -35,7 +34,7 @@ void Selection::update(const Camera& camera, const ChunkManager& cm) {
 				this->buildingBlock = intPosPrev;
 			}
 
-			this->transMat = glm::translate(glm::mat4(1.f), (glm::vec3)intPos);
+			outlineModel.modelMat = glm::translate(glm::mat4(1.f), (glm::vec3)intPos);
 			break;
 		}
 

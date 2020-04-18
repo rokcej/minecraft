@@ -15,8 +15,7 @@ public:
 	glm::ivec3 selectedBlock;
 	glm::ivec3 buildingBlock;
 
-	Model blockModel;
-	glm::mat4 transMat;
+	Model outlineModel;
 
 	Selection();
 

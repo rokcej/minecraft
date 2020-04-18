@@ -7,11 +7,19 @@
 #include "game.h"
 #include "timer.h"
 
+#include "block_data.h"
+#include "model.h"
+
 #define WINDOW_TITLE "Minecraft"
 #define WINDOW_WIDTH 1600
 #define WINDOW_HEIGHT 900
 #define WINDOW_FULLSCREEN false
 #define WINDOW_ANTI_ALIASING 8
+
+void init() {
+	initBlockData(); // Load block data
+	initMeshData(); // Load mesh data
+}
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
 	glViewport(0, 0, width, height);
@@ -83,6 +91,9 @@ int main() {
 	if (glewInit() != GLEW_OK) {
 		return -1;
 	}
+
+	// My init
+	init();
 
 	// Print versions
 	std::cout << "OpenGL version:\t" << glGetString(GL_VERSION) << std::endl;

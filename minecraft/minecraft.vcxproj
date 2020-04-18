@@ -159,6 +159,7 @@
     <ClCompile Include="outline_renderer.cpp" />
     <ClCompile Include="perlin_noise.cpp" />
     <ClCompile Include="player.cpp" />
+    <ClCompile Include="player_renderer.cpp" />
     <ClCompile Include="png_reader.cpp" />
     <ClCompile Include="selection.cpp" />
     <ClCompile Include="shader_loader.cpp" />
@@ -183,6 +184,7 @@
     <ClInclude Include="outline_renderer.h" />
     <ClInclude Include="perlin_noise.h" />
     <ClInclude Include="player.h" />
+    <ClInclude Include="player_renderer.h" />
     <ClInclude Include="png_reader.h" />
     <ClInclude Include="selection.h" />
     <ClInclude Include="shader_loader.h" />

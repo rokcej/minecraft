@@ -1,6 +1,5 @@
 #include "game.h"
 
-#include <iostream>
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include "block_data.h"
@@ -9,16 +8,20 @@ constexpr float HALF_PI_LESS = ((float)M_PI_2 * 0.999f);
 
 Game::Game(GLFWwindow* window) :
 	Context(window),
+	player(),
 	chunkManager(&terrainGen),
 	chunkRenderer(),
 	outlineRenderer(),
+	playerRenderer(),
 	waterRenderer(),
 	hudRenderer(),
 	camera(&player, getAspectRatio()),
 	selection(),
 	terrainGen()
 {
-	player.pos.y = (float)terrainGen.getTerrainData((int)player.pos.x, (int)player.pos.z).height + 1.f;
+	
+	glm::vec3 spawn(.5f, (float)terrainGen.getTerrainData(0, 0).height + 1.f, .5f);
+	player.setPos(spawn);
 }
 
 Game::~Game() {
@@ -34,6 +37,9 @@ void Game::render() {
 
 	// Draw selection
 	outlineRenderer.render(camera, selection, getHeight());
+
+	// Draw player
+	playerRenderer.render(camera, player);
 
 	// Draw water
 	waterRenderer.render(camera, chunkManager);
