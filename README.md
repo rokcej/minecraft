@@ -2,6 +2,11 @@
 
 My attempt at recreating Minecraft.
 
+## Progress videos
+
+1. [Frustum culling, mesh generation](https://www.youtube.com/watch?v=w9cPRtHJvhQ)
+2. [Terrain generation, placing/removing blocks, water rendering](https://www.youtube.com/watch?v=lfoaZBSwSNM)
+
 ## Configuration
 
 Make sure the project platform is set to `x64`.
