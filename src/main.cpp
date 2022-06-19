@@ -2,7 +2,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-int main(int argc, char *argv[]) {
+int main() {
 	// GLFW
 	if (!glfwInit()) {
 		std::cerr << "[ERROR] Failed to initialize GLFW" << std::endl;
