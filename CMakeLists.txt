@@ -3,9 +3,7 @@ cmake_minimum_required(VERSION 3.13)
 project(minecraft)
 
 # find src/* -name "*.cpp" -printf "%p\n"
-add_executable(minecraft
-	src/main.cpp
-)
+add_executable(minecraft "src/main.cpp" "src/window.h" "src/window.cpp" "src/states/state.h" "src/states/state.cpp" "src/states/game_state.h" "src/states/game_state.cpp")
 
 target_compile_features(minecraft PUBLIC cxx_std_17)
 target_compile_options(minecraft PUBLIC

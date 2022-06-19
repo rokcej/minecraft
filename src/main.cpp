@@ -1,35 +1,32 @@
 #include <iostream>
+#include <memory>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <src/window.h>
+#include <src/states/game_state.h>
 
 int main() {
 	// GLFW
 	if (!glfwInit()) {
-		std::cerr << "[ERROR] Failed to initialize GLFW" << std::endl;
-		return 1;
+		throw std::runtime_error("Failed to initialize GLFW");
 	}
 
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-	GLFWwindow *window = glfwCreateWindow(1280, 720, "Minecraft", NULL, NULL);
-	if (!window) {
-		glfwTerminate();
-		std::cerr << "[ERROR] Failed to create GLFW window" << std::endl;
-		return -1;
-	}
-	glfwMakeContextCurrent(window);
+	Window window("Minecraft");
+	glfwMakeContextCurrent(window.glfw_window_);
 
 	// GLAD
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-        std::cerr << "[ERROR] Failed to initialize GLAD" << std::endl;
-        return 1;
-    }
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+		throw std::runtime_error("Failed to initialize GLAD");
+	}
 
-	while (!glfwWindowShouldClose(window)) {
-		glClear(GL_COLOR_BUFFER_BIT);
-		glfwSwapBuffers(window);
+	std::unique_ptr<State> state = std::make_unique<GameState>(&window);
+	window.SetState(state.get());
+
+	while (!glfwWindowShouldClose(window.glfw_window_)) {
+		state->Update(0.0f);
+		state->Render();
+
+		glfwSwapBuffers(window.glfw_window_);
 		glfwPollEvents();
 	}
 
