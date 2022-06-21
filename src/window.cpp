@@ -10,7 +10,7 @@ Window::Window(const std::string& title) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	glfw_window_ = glfwCreateWindow(1280, 720, title.c_str(), NULL, NULL);
+	glfw_window_ = glfwCreateWindow(width_, height_, title.c_str(), NULL, NULL);
 	if (!glfw_window_) {
 		throw std::runtime_error("Failed to create GLFW window");
 	}
@@ -19,6 +19,14 @@ Window::Window(const std::string& title) {
 	glfwSetFramebufferSizeCallback(glfw_window_, FramebufferSizeCallback);
 	glfwSetKeyCallback(glfw_window_, KeyCallback);
 	glfwSetCursorPosCallback(glfw_window_, CursorPosCallback);
+}
+
+int Window::GetWidth() const {
+	return width_;
+}
+
+int Window::GetHeight() const {
+	return height_;
 }
 
 void Window::SetState(State* state) {
@@ -30,6 +38,9 @@ void Window::FramebufferSizeCallback(GLFWwindow* glfw_window, int width, int hei
 	if (window->state_) {
 		window->state_->FramebufferSizeCallback(width, height);
 	}
+
+	window->width_ = width;
+	window->height_ = height;
 }
 
 void Window::KeyCallback(GLFWwindow* glfw_window, int key, int scancode, int action, int mods) {

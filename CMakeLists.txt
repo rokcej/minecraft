@@ -13,6 +13,7 @@ target_compile_options(minecraft PUBLIC
 
 add_subdirectory(lib/glfw)
 add_subdirectory(lib/glad)
+add_subdirectory(lib/glm)
 add_subdirectory(lib/stb)
 
 target_include_directories(minecraft
@@ -20,7 +21,7 @@ target_include_directories(minecraft
 )
 
 target_link_libraries(minecraft
-	PRIVATE glfw glad stb
+	PRIVATE glfw glad glm stb
 )
 
 # Copy data files to build directory

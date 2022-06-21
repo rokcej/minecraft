@@ -5,9 +5,9 @@ layout (location = 1) in vec2 aUV;
 
 out vec2 vUV;
 
-// uniform mat4 uPVMMat;
+uniform mat4 uPVMMat;
 
 void main() {
-	gl_Position = vec4(aPos, 1.0); // uPVMMat * vec4(aPos, 1.0);
+	gl_Position = uPVMMat * vec4(aPos, 1.0);
 	vUV = aUV;
 }

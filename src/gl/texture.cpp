@@ -40,7 +40,6 @@ Texture::Texture(const std::string& file_path) {
 
 Texture::~Texture() {
 	glDeleteTextures(1, &id_);
-    std::cout << "DELETED TEX" << std::endl;
 }
 
 void Texture::Bind() const {

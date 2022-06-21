@@ -9,6 +9,9 @@ class Window {
 public:
 	Window(const std::string& title);
 
+	int GetWidth() const;
+	int GetHeight() const;
+
 	void SetState(State* state);
 
 private:
@@ -20,6 +23,8 @@ public:
 	GLFWwindow* glfw_window_ = nullptr; // TODO: Make this private
 
 private:
+	int width_ = 1280;
+	int height_ = 720;
 	State* state_ = nullptr;
 
 };

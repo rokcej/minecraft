@@ -1,6 +1,8 @@
 #include "game_state.h"
 
 #include <iostream>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include <src/gl/shader.h>
 
 GameState::GameState(Window* window) : State(window) {
@@ -63,6 +65,13 @@ void GameState::Render() {
 
     glActiveTexture(GL_TEXTURE0);
     texture_->Bind();
+
+    glm::mat4 proj_mat = glm::ortho(0.0f, (float)window_->GetWidth(), 0.0f, (float)window_->GetHeight(), -1.0f, 1.0f);
+    glm::mat4 model_mat(1.0f);
+    model_mat = glm::translate(model_mat, glm::vec3(640.0f, 360.0f, 0.0f));
+    model_mat = glm::scale(model_mat, glm::vec3(100.0f, 100.0f, 1.0f));
+    glm::mat4 pvm_mat = proj_mat * model_mat;
+    glUniformMatrix4fv(glGetUniformLocation(program_, "uPVMMat"), 1, GL_FALSE, glm::value_ptr(pvm_mat));
 
     glBindVertexArray(vao_);
 
