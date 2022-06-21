@@ -4,6 +4,8 @@
 #include <src/gl/shader.h>
 
 GameState::GameState(Window* window) : State(window) {
+    texture_ = std::make_unique<Texture>("data/textures/face.png");
+
 	program_ = gl::CreateProgram("data/shaders/basic.vert", "data/shaders/basic.frag");
 
     const GLfloat vertices[] = {
@@ -58,6 +60,10 @@ void GameState::Render() {
 	glClear(GL_COLOR_BUFFER_BIT);
 
     glUseProgram(program_);
+
+    glActiveTexture(GL_TEXTURE0);
+    texture_->Bind();
+
     glBindVertexArray(vao_);
 
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);

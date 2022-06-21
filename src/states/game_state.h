@@ -1,7 +1,9 @@
 #pragma once
 
+#include <memory>
 #include <glad/glad.h>
 #include "state.h"
+#include <src/gl/texture.h>
 
 class GameState : public State {
 public:
@@ -18,5 +20,7 @@ public:
 private:
 	GLuint program_;
 	GLuint vbo_, ebo_, vao_;
+
+	std::unique_ptr<Texture> texture_;
 
 };

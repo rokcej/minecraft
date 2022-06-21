@@ -5,8 +5,8 @@
 
 namespace gl {
 
-	GLuint CreateShader(const std::string& shader_path, GLenum shader_type) {
-		std::string shader_source = file::ReadTextFile(shader_path);
+	GLuint CreateShader(const std::string& file_path, GLenum shader_type) {
+		std::string shader_source = file::ReadTextFile(file_path);
 		const char* shader_source_c = shader_source.c_str();
 
 		GLuint shader = glCreateShader(shader_type);
@@ -23,7 +23,7 @@ namespace gl {
 			GLchar* log = new GLchar[log_length];
 			glGetShaderInfoLog(shader, log_length, &log_length, log);
 
-			std::cerr << "[SHADER COMPILATION ERROR] " << shader_path << std::endl;
+			std::cerr << "[SHADER COMPILATION ERROR] " << file_path << std::endl;
 			std::cerr << log << std::endl << std::endl;
 			delete[] log;
 		}
