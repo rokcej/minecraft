@@ -4,6 +4,7 @@
 #include <GLFW/glfw3.h>
 #include <src/window.h>
 #include <src/states/game_state.h>
+#include <src/utils/timer.h>
 
 int main() {
 	// GLFW
@@ -13,6 +14,7 @@ int main() {
 
 	Window window("Minecraft");
 	glfwMakeContextCurrent(window.glfw_window_);
+	glfwSwapInterval(0); // Disable VSync
 
 	// GLAD
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
@@ -22,8 +24,12 @@ int main() {
 	std::unique_ptr<State> state = std::make_unique<GameState>(&window);
 	window.SetState(state.get());
 
+	Timer timer;
+
 	while (!glfwWindowShouldClose(window.glfw_window_)) {
-		state->Update(0.0f);
+		timer.Update();
+
+		state->Update(timer.GetDeltaTime());
 		state->Render();
 
 		glfwSwapBuffers(window.glfw_window_);
