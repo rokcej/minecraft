@@ -35,4 +35,5 @@ private:
 	float fps_time_ = 0.0f;
 	int fps_ = 0;
 	std::unique_ptr<Text> fps_text_;
+
 };

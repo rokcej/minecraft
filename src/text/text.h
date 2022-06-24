@@ -12,7 +12,10 @@ public:
 	~Text();
 
 	void SetText(const std::string& text);
-	void Render(float x, float y, float scale, glm::vec3 color) const;
+	void Render(glm::vec2 pos, glm::vec2 scale, glm::vec3 color) const;
+
+private:
+	void UpdateVertices();
 
 private:
 	std::string text_;
@@ -21,4 +24,5 @@ private:
 
 	GLuint vao_;
 	GLuint vbo_;
+
 };

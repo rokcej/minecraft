@@ -34,6 +34,9 @@ Texture::~Texture() {
 }
 
 void Texture::Generate(int width, int height, int n_channels, GLubyte* data, TextureParams params) {
+    width_ = width;
+    height_ = height;
+
     glGenTextures(1, &id_);
     glBindTexture(GL_TEXTURE_2D, id_);
 
@@ -52,9 +55,27 @@ void Texture::Generate(int width, int height, int n_channels, GLubyte* data, Tex
         format = GL_RED;
         break;
     }
+    internal_format_ = format;
 
     glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
-    glGenerateMipmap(GL_TEXTURE_2D);
+    //glGenerateMipmap(GL_TEXTURE_2D);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+int Texture::GetWidth() const {
+    return width_;
+}
+
+int Texture::GetHeight() const {
+    return height_;
+}
+
+void Texture::SubImage(int x, int y, int width, int height, unsigned char* data) {
+    glBindTexture(GL_TEXTURE_2D, id_);
+
+    glTexSubImage2D(GL_TEXTURE_2D, 0, x, y, width, height, internal_format_, GL_UNSIGNED_BYTE, data);
+    //glGenerateMipmap(GL_TEXTURE_2D);
 
     glBindTexture(GL_TEXTURE_2D, 0);
 }

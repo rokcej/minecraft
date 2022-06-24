@@ -46,3 +46,10 @@ cmake --build build
 * Setting working directory for Visual Studio debugging:
 	1. Right click on target executable, select "Add Debug Configuration"
 	2. Add field `"currentDir": "${workspaceRoot}"`
+
+## Benchmarks
+
+* Font rendering (201 texts)
+	1. Rendering each character using separate texture: 106 FPS
+	1. Rendering each character using font atlas: 117 FPS
+	1. Rendering whole text using font atlas: ~3800 FPS

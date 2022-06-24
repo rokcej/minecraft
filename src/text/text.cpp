@@ -1,10 +1,17 @@
 #include "text.h"
 
+#include <vector>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <src/text/font.h>
 #include <src/gl/texture.h>
 
+struct TextVertex {
+	GLfloat x;
+	GLfloat y;
+	GLfloat u;
+	GLfloat v;
+};
 
 Text::Text(const std::string& text, Font* font, GLuint shader) {
 	text_ = text;
@@ -14,11 +21,12 @@ Text::Text(const std::string& text, Font* font, GLuint shader) {
 	glGenVertexArrays(1, &vao_);
 	glGenBuffers(1, &vbo_);
 
+	UpdateVertices();
+
 	glBindVertexArray(vao_);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vbo_);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, NULL, GL_DYNAMIC_DRAW);
-
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
 
@@ -32,42 +40,50 @@ Text::~Text() {
 }
 
 void Text::SetText(const std::string& text) {
+	if (text == text_) {
+		return;
+	}
 	text_ = text;
+	UpdateVertices();
 }
 
-void Text::Render(float x, float y, float scale, glm::vec3 color) const {
+void Text::UpdateVertices() {
+	std::vector<TextVertex> vertices(6 * text_.length());
+	int i = 0;
+	float advance = 0.0f;
+	for (const unsigned char& c : text_) {
+		const FontCharacter& ch = font_->characters_[c];
+
+		float x0 = advance + ch.bearing_.x;
+		float y0 = ch.bearing_.y - ch.size_.y;
+
+		float x1 = x0 + ch.size_.x;
+		float y1 = y0 + ch.size_.y;
+
+		const glm::vec2& uv0 = ch.uv_;
+		const glm::vec2 uv1 = uv0 + glm::vec2(ch.size_) / glm::vec2(font_->atlas_->GetWidth(), font_->atlas_->GetHeight());
+
+		vertices[i++] = { x0, y1, uv0.x, uv0.y };
+		vertices[i++] = { x0, y0, uv0.x, uv1.y };
+		vertices[i++] = { x1, y0, uv1.x, uv1.y };
+		vertices[i++] = { x0, y1, uv0.x, uv0.y };
+		vertices[i++] = { x1, y0, uv1.x, uv1.y };
+		vertices[i++] = { x1, y1, uv1.x, uv0.y };
+
+		// Move position to next glyph
+		advance += ch.advance_;
+	}
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(TextVertex) * vertices.size(), vertices.data(), GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+void Text::Render(glm::vec2 pos, glm::vec2 scale, glm::vec3 color) const {
+	glUniform2f(glGetUniformLocation(shader_, "uPos"), pos.x, pos.y);
+	glUniform2f(glGetUniformLocation(shader_, "uScale"), scale.x, scale.y);
 	glUniform3f(glGetUniformLocation(shader_, "uColor"), color.r, color.g, color.b);
 	glBindVertexArray(vao_);
 
-	for (const unsigned char& c : text_) {
-		const FontCharacter& ch = font_->characters_.at(c);
-
-		float x0 = x + ch.bearing_.x * scale;
-		float y0 = y - (ch.size_.y - ch.bearing_.y) * scale;
-
-		float w = ch.size_.x * scale;
-		float h = ch.size_.y * scale;
-
-		float vertices[6][4] = {
-			{ x0,     y0 + h,   0.0f, 0.0f },
-			{ x0,     y0,       0.0f, 1.0f },
-			{ x0 + w, y0,       1.0f, 1.0f },
-			{ x0,     y0 + h,   0.0f, 0.0f },
-			{ x0 + w, y0,       1.0f, 1.0f },
-			{ x0 + w, y0 + h,   1.0f, 0.0f }
-		};
-
-		ch.texture_->Bind();
-		
-		glBindBuffer(GL_ARRAY_BUFFER, vbo_);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		
-		glDrawArrays(GL_TRIANGLES, 0, 6);
-
-		// Move position to next glyph (advance is given in 1/64 pixels)
-		x += (ch.advance_ >> 6) * scale; // Bitshift by 6 to get value in pixels (2^6 = 64)
-	}
-	glBindVertexArray(0);
-	glBindTexture(GL_TEXTURE_2D, 0);
+	font_->atlas_->Bind();
+	glDrawArrays(GL_TRIANGLES, 0, 6 * text_.length());
 }

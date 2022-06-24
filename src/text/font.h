@@ -10,9 +10,9 @@ class Texture;
 class FontCharacter {
 public:
 	FontCharacter() = default;
-	FontCharacter(std::unique_ptr<Texture> texture, glm::ivec2 size, glm::ivec2 bearing, unsigned int advance);
+	FontCharacter(glm::vec2 uv, glm::ivec2 size, glm::ivec2 bearing, unsigned int advance);
 
-	std::unique_ptr<Texture> texture_ = nullptr;
+	glm::vec2 uv_;
 	glm::ivec2 size_;
 	glm::ivec2 bearing_;
 	unsigned int advance_;
@@ -25,7 +25,8 @@ public:
 	Font(const std::string& file_path, int height);
 	~Font();
 
-public:
-	std::map<unsigned char, FontCharacter> characters_;
+public: // TODO: Make private
+	FontCharacter characters_[128];
+	std::unique_ptr<Texture> atlas_ = nullptr;
 
 };

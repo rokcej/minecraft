@@ -21,13 +21,20 @@ public:
 	Texture(int width, int height, int n_channels, unsigned char* data, TextureParams params = TextureParams());
 	~Texture();
 
+	int GetWidth() const;
+	int GetHeight() const;
+
 	void Bind() const;
+	void SubImage(int x, int y, int width, int height, unsigned char* data);
 
 private:
 	void Generate(int width, int height, int n_channels, GLubyte* data, TextureParams params);
 
 private:
 	GLuint id_;
+	GLuint internal_format_;
+	int width_;
+	int height_;
 
 	static const int kFallbackWidth;
 	static const int kFallbackHeight;

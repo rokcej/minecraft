@@ -12,7 +12,7 @@
 
 GameState::GameState(Window* window) : State(window) {
 	program_ = gl::CreateProgram("data/shaders/basic.vert", "data/shaders/basic.frag");
-	texture_ = std::make_unique<Texture>("data/textures/face.png", TextureParams(GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR, GL_NEAREST));
+	texture_ = std::make_unique<Texture>("data/textures/face.png", TextureParams(GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_NEAREST)); // GL_LINEAR_MIPMAP_LINEAR
 
 	const GLfloat vertices[] = {
 		// Position         // UV
@@ -43,9 +43,9 @@ GameState::GameState(Window* window) : State(window) {
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 
-	// vao_s store the following calls:
-	//   -For vbo_s: glVertexAttribPointer and glEnableVertexAttribArray --> we CAN unbind vbo_s
-	//   -For ebo_s: glBindBuffer --> we CAN'T unbind ebo_s
+	// VAOs store the following calls:
+	//   -For VBOs: glVertexAttribPointer and glEnableVertexAttribArray --> we CAN unbind VBOs
+	//   -For EBOs: glBindBuffer --> we CAN'T unbind EBOs
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 
@@ -118,10 +118,10 @@ void GameState::Render() {
 	for (int i = num_texts - 1; i >= 0; --i) {
 		float ratio = (float)i / num_texts * 0.9f;
 		glm::vec3 color = (i == 0) ? glm::vec3(1.0f, 1.0f, 1.0f) : glm::vec3(0.95f * ratio, 1.0f - 0.95f * ratio, 0.15f); // glm::vec3(0.9f, 0.2f, 0.1f);
-		text_->Render(50.0f + (float)i, 500.0f - float(i), 1.0f, color);
+		text_->Render(glm::vec2(50.0f + (float)i, 500.0f - float(i)), glm::vec2(1.0f), color);
 	}
 
-	fps_text_->Render(5.0f, window_->GetHeight() - 23.0f, 0.25, { 1.0f, 1.0f, 1.0f });
+	fps_text_->Render(glm::vec2(5.0f, window_->GetHeight() - 23.0f), glm::vec2(0.25), glm::vec3(1.0f));
 }
 
 void GameState::FramebufferSizeCallback(int width, int height) {
