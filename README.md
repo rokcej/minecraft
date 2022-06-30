@@ -46,6 +46,8 @@ cmake --build build
 * Setting working directory for Visual Studio debugging:
 	1. Right click on target executable, select "Add Debug Configuration"
 	2. Add field `"currentDir": "${workspaceRoot}"`
+* FreeType tips:
+	* `FT_Load_Char(FT_LOAD_RENDER) --> FT_Get_Glyph()` is faster than `FT_Load_Char(FT_LOAD_DEFAULT) --> FT_Load_Char(FT_LOAD_RENDER)` (~24% performance increase over 10000 iterations)
 
 ## Benchmarks
 

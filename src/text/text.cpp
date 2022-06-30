@@ -51,7 +51,7 @@ void Text::UpdateVertices() {
 	int i = 0;
 	float advance = 0.0f;
 	for (const unsigned char& c : text_) {
-		const FontCharacter& ch = font_->characters_[c];
+		const FontCharacter& ch = font_->GetCharacter(c);
 
 		float x0 = advance + ch.bearing_.x;
 		float y0 = (float)(ch.bearing_.y - ch.size_.y);
@@ -83,6 +83,6 @@ void Text::Render(glm::vec2 pos, glm::vec2 scale, glm::vec3 color) const {
 	glUniform3f(glGetUniformLocation(shader_, "uColor"), color.r, color.g, color.b);
 	glBindVertexArray(vao_);
 
-	font_->atlas_->Bind();
+	font_->GetAtlas()->Bind();
 	glDrawArrays(GL_TRIANGLES, 0, 6 * (GLsizei)text_.length());
 }
