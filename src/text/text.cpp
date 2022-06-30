@@ -24,7 +24,6 @@ Text::Text(const std::string& text, Font* font, GLuint shader) {
 	UpdateVertices();
 
 	glBindVertexArray(vao_);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo_);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vbo_);
 	glEnableVertexAttribArray(0);
@@ -55,13 +54,13 @@ void Text::UpdateVertices() {
 		const FontCharacter& ch = font_->characters_[c];
 
 		float x0 = advance + ch.bearing_.x;
-		float y0 = ch.bearing_.y - ch.size_.y;
+		float y0 = (float)(ch.bearing_.y - ch.size_.y);
 
 		float x1 = x0 + ch.size_.x;
 		float y1 = y0 + ch.size_.y;
 
-		const glm::vec2& uv0 = ch.uv_;
-		const glm::vec2 uv1 = uv0 + glm::vec2(ch.size_) / glm::vec2(font_->atlas_->GetWidth(), font_->atlas_->GetHeight());
+		const glm::vec2& uv0 = ch.uv_min_;
+		const glm::vec2& uv1 = ch.uv_max_;
 
 		vertices[i++] = { x0, y1, uv0.x, uv0.y };
 		vertices[i++] = { x0, y0, uv0.x, uv1.y };
@@ -85,5 +84,5 @@ void Text::Render(glm::vec2 pos, glm::vec2 scale, glm::vec3 color) const {
 	glBindVertexArray(vao_);
 
 	font_->atlas_->Bind();
-	glDrawArrays(GL_TRIANGLES, 0, 6 * text_.length());
+	glDrawArrays(GL_TRIANGLES, 0, 6 * (GLsizei)text_.length());
 }

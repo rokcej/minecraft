@@ -10,9 +10,10 @@ class Texture;
 class FontCharacter {
 public:
 	FontCharacter() = default;
-	FontCharacter(glm::vec2 uv, glm::ivec2 size, glm::ivec2 bearing, unsigned int advance);
+	FontCharacter(glm::vec2 uv_min, glm::vec2 uv_max, glm::ivec2 size, glm::ivec2 bearing, unsigned int advance);
 
-	glm::vec2 uv_;
+	glm::vec2 uv_min_;
+	glm::vec2 uv_max_;
 	glm::ivec2 size_;
 	glm::ivec2 bearing_;
 	unsigned int advance_;

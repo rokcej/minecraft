@@ -17,7 +17,7 @@ int main() {
 	glfwSwapInterval(0); // Disable VSync
 
 	// GLAD
-	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) { // Must be called after glfwMakeContextCurrent
 		throw std::runtime_error("Failed to initialize GLAD");
 	}
 

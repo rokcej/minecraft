@@ -4,6 +4,6 @@
 
 namespace file {
 
-	std::string ReadTextFile(const std::string& path);
+std::string ReadTextFile(const std::string& path);
 
-}
+} // namespace file
