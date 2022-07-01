@@ -21,10 +21,12 @@ public:
 	Font(const std::string& file_path, int height);
 	~Font();
 
+	int GetHeight() const;
 	const FontCharacter& GetCharacter(char c) const;
 	const std::unique_ptr<Texture>& GetAtlas() const;
 
 private:
+	int height_ = 0;
 	std::map<unsigned char, FontCharacter> characters_;
 	std::unique_ptr<Texture> atlas_ = nullptr;
 

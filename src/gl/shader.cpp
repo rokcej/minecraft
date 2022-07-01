@@ -2,6 +2,32 @@
 
 #include <iostream>
 #include <src/utils/file.h>
+#include <glm/gtc/type_ptr.hpp>
+
+// TODO: Add geometry shader support
+Shader::Shader(const std::string& vertex_path, const std::string& fragment_path) {
+	id_ = gl::CreateProgram(vertex_path, fragment_path);
+}
+
+Shader::~Shader() {
+	glDeleteProgram(id_);
+}
+
+void Shader::Use() const {
+	glUseProgram(id_);
+}
+
+void Shader::SetVector2(const char* name, float x, float y) {
+	glUniform2f(glGetUniformLocation(id_, name), x, y);
+}
+
+void Shader::SetVector3(const char* name, float x, float y, float z) {
+	glUniform3f(glGetUniformLocation(id_, name), x, y, z);
+}
+
+void Shader::SetMatrix4(const char* name, const glm::mat4& matrix) {
+	glUniformMatrix4fv(glGetUniformLocation(id_, name), 1, GL_FALSE, glm::value_ptr(matrix));
+}
 
 namespace gl {
 

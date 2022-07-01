@@ -27,6 +27,7 @@ Font::Font(const std::string& file_path, int height) {
 		std::cerr << "[ERROR] Failed to load font " << file_path << std::endl;
 	}
 	FT_Set_Pixel_Sizes(face, 0, height);
+	height_ = height;
 	
 
 	// Load glyphs
@@ -54,10 +55,10 @@ Font::Font(const std::string& file_path, int height) {
 	// Initialize atlas
 	int atlas_width = math::RoundUpToMultipleOf4(std::sqrtf((float)rect_area_sum));
 	int upscale_iters = 0;
-	while (!rect_pack::RowPacking(atlas_width, atlas_width, rects)) {
+	do {
 		atlas_width = math::RoundUpToMultipleOf4(atlas_width * 1.05f); // Scale up by 5%
 		++upscale_iters;
-	}
+	} while (!rect_pack::RowPacking(atlas_width, atlas_width, rects));
 	int atlas_height = atlas_width;
 
 	// TODO: Zero-initialize texture atlas (is this even necessary?)
@@ -100,6 +101,10 @@ Font::Font(const std::string& file_path, int height) {
 
 Font::~Font() {
 
+}
+
+int Font::GetHeight() const {
+	return height_;
 }
 
 const FontCharacter& Font::GetCharacter(char c) const {

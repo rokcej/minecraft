@@ -5,6 +5,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <src/text/font.h>
 #include <src/gl/texture.h>
+#include <src/gl/shader.h>
 
 struct TextVertex {
 	GLfloat x;
@@ -13,10 +14,9 @@ struct TextVertex {
 	GLfloat v;
 };
 
-Text::Text(const std::string& text, Font* font, GLuint shader) {
+Text::Text(const std::string& text, Font* font) {
 	text_ = text;
 	font_ = font;
-	shader_ = shader;
 
 	glGenVertexArrays(1, &vao_);
 	glGenBuffers(1, &vbo_);
@@ -77,12 +77,23 @@ void Text::UpdateVertices() {
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void Text::Render(glm::vec2 pos, glm::vec2 scale, glm::vec3 color) const {
-	glUniform2f(glGetUniformLocation(shader_, "uPos"), pos.x, pos.y);
-	glUniform2f(glGetUniformLocation(shader_, "uScale"), scale.x, scale.y);
-	glUniform3f(glGetUniformLocation(shader_, "uColor"), color.r, color.g, color.b);
+void Text::Render(const std::unique_ptr<Shader>& shader) const {
+	shader->SetVector2("uPos", pos_.x, pos_.y);
+	shader->SetVector3("uColor", color_.r, color_.g, color_.b);
 	glBindVertexArray(vao_);
 
 	font_->GetAtlas()->Bind();
 	glDrawArrays(GL_TRIANGLES, 0, 6 * (GLsizei)text_.length());
+}
+
+int Text::GetHeight() const {
+	return font_->GetHeight();
+}
+
+void Text::SetPosition(const glm::vec2& pos) {
+	pos_ = pos;
+}
+
+void Text::SetColor(const glm::vec3& color) {
+	color_ = color;
 }

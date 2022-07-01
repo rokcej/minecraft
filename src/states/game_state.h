@@ -4,10 +4,10 @@
 #include <glad/glad.h>
 #include "state.h"
 
+class Shader;
 class Texture;
 class Font;
 class Text;
-class Timer;
 
 class GameState : public State {
 public:
@@ -22,18 +22,16 @@ public:
 	void CursorPosCallback(double x, double y) override;
 
 private:
-	GLuint program_;
 	GLuint vbo_, ebo_, vao_;
+	std::unique_ptr<Shader> shader_;
 	std::unique_ptr<Texture> texture_;
 
-	GLuint text_program_;
+	std::unique_ptr<Shader> text_shader_;
 	std::unique_ptr<Font> font_;
-	std::unique_ptr<Text> text_;
 
-	std::unique_ptr<Timer> fps_timer_;
+	std::unique_ptr<Text> fps_text_;
 	int fps_count_ = 0;
 	float fps_time_ = 0.0f;
 	int fps_ = 0;
-	std::unique_ptr<Text> fps_text_;
 
 };
