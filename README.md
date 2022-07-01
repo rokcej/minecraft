@@ -48,6 +48,7 @@ cmake --build build
 	2. Add field `"currentDir": "${workspaceRoot}"`
 * FreeType tips:
 	* `FT_Load_Char(FT_LOAD_RENDER) --> FT_Get_Glyph()` is faster than `FT_Load_Char(FT_LOAD_DEFAULT) --> FT_Load_Char(FT_LOAD_RENDER)` (~24% performance increase over 10000 iterations)
+	* `glTexImage2D() --> glTexSubImage2D()` is faster than `std::copy() --> glTexImage2D()` (~2.1x faster over a single iteration)
 
 ## Benchmarks
 

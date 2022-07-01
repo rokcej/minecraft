@@ -10,6 +10,7 @@
 #include <glad/glad.h>
 #include <src/gl/texture.h>
 #include <src/utils/rect_pack.h>
+#include <src/utils/math.h>
 
 const int Font::kFirstChar = 32;
 const int Font::kNumChars = 128 - Font::kFirstChar;
@@ -27,6 +28,8 @@ Font::Font(const std::string& file_path, int height) {
 	}
 	FT_Set_Pixel_Sizes(face, 0, height);
 	
+
+	// Load glyphs
 	std::vector<FT_Glyph> glyphs(kNumChars);
 	std::vector<rect_pack::Rectangle> rects(kNumChars);
 	int rect_area_sum = 0;
@@ -47,25 +50,33 @@ Font::Font(const std::string& file_path, int height) {
 		rect_area_sum += width * height;
 	}
 
-	//int atlas_width = 1 << (int)std::ceil(std::log2(std::sqrt(rect_area_sum))); // Round up to nearest power of 2
-	int atlas_width = (int)std::ceil(std::sqrt(rect_area_sum));
+
+	// Initialize atlas
+	int atlas_width = math::RoundUpToMultipleOf4(std::sqrtf((float)rect_area_sum));
+	int upscale_iters = 0;
 	while (!rect_pack::RowPacking(atlas_width, atlas_width, rects)) {
-		atlas_width = (int)(atlas_width * 1.2f);
+		atlas_width = math::RoundUpToMultipleOf4(atlas_width * 1.05f); // Scale up by 5%
+		++upscale_iters;
 	}
 	int atlas_height = atlas_width;
 
-	float ratio = (float)rect_area_sum / (atlas_width * atlas_height);
-	std::cout << "[Font atlas] res = " << atlas_width << "x" << atlas_height << ", ratio = " << ratio << std::endl;
-
-	// TODO: Zero-initialize texture atlas
+	// TODO: Zero-initialize texture atlas (is this even necessary?)
 	atlas_ = std::make_unique<Texture>(atlas_width, atlas_height, 1, nullptr);
 
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	float compression_ratio = (float)rect_area_sum / (atlas_width * atlas_height);
+	std::cout << "[Font atlas] " << 
+		"resolution="   << atlas_width << "x" << atlas_height << ", " << 
+		"ratio=" << compression_ratio << ", " << 
+		"iters=" << upscale_iters << std::endl;
+
+
+	// Copy glyphs into atlas
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // Disable 4-byte alignment restriction
 	for (const auto& rect : rects) {
 		const unsigned char c = rect.id;
 		const FT_BitmapGlyph& bit_glyph = (FT_BitmapGlyph)glyphs[c - kFirstChar];
 
-		// TODO: Create whole array on the CPU
+		// This is faster than creating atlas buffer on the CPU (tested using std::copy)
 		atlas_->SubImage(rect.x, rect.y, rect.w, rect.h, bit_glyph->bitmap.buffer);
 
 		const glm::vec2 atlas_size(atlas_width, atlas_height);
@@ -79,7 +90,8 @@ Font::Font(const std::string& file_path, int height) {
 
 		FT_Done_Glyph(glyphs[c - kFirstChar]);
 	}
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 2);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 4); // Re-enable default alignment
+
 
 	FT_Done_Face(face);
 
