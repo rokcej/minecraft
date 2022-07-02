@@ -36,6 +36,7 @@ int main() {
 		glfwPollEvents();
 	}
 
+	state = nullptr;
 	glfwTerminate();
 
 	return 0;

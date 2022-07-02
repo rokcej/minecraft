@@ -53,7 +53,7 @@ Font::Font(const std::string& file_path, int height) {
 
 
 	// Initialize atlas
-	int atlas_width = math::RoundUpToMultipleOf4(std::sqrtf((float)rect_area_sum));
+	int atlas_width = math::RoundUpToMultipleOf4(std::sqrt((float)rect_area_sum));
 	int upscale_iters = 0;
 	do {
 		atlas_width = math::RoundUpToMultipleOf4(atlas_width * 1.05f); // Scale up by 5%
