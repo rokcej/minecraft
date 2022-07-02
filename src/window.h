@@ -7,12 +7,20 @@ class State;
 
 class Window {
 public:
+	enum class CursorMode {
+		kNormal = 0,
+		kDisabled
+	};
+
 	Window(const std::string& title);
 
+	void Close() const;
 	int GetWidth() const;
 	int GetHeight() const;
 
 	void SetState(State* state);
+	void SetCursorPos(double x, double y);
+	void SetCursorMode(CursorMode mode);
 
 private:
 	static void FramebufferSizeCallback(GLFWwindow* glfw_window, int width, int height);

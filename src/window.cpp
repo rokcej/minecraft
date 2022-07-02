@@ -21,6 +21,10 @@ Window::Window(const std::string& title) {
 	glfwSetCursorPosCallback(glfw_window_, CursorPosCallback);
 }
 
+void Window::Close() const {
+	glfwSetWindowShouldClose(glfw_window_, GLFW_TRUE);
+}
+
 int Window::GetWidth() const {
 	return width_;
 }
@@ -31,6 +35,23 @@ int Window::GetHeight() const {
 
 void Window::SetState(State* state) {
 	state_ = state;
+}
+
+void Window::SetCursorPos(double x, double y) {
+	glfwSetCursorPos(glfw_window_, x, y);
+}
+
+void Window::SetCursorMode(CursorMode mode) {
+	int glfw_mode;
+	switch (mode) {
+	case CursorMode::kNormal:
+		glfw_mode = GLFW_CURSOR_NORMAL;
+		break;
+	case CursorMode::kDisabled:
+		glfw_mode = GLFW_CURSOR_DISABLED;
+		break;
+	}
+	glfwSetInputMode(glfw_window_, GLFW_CURSOR, glfw_mode);
 }
 
 void Window::FramebufferSizeCallback(GLFWwindow* glfw_window, int width, int height) {

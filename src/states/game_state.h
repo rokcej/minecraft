@@ -2,10 +2,12 @@
 
 #include <memory>
 #include <glad/glad.h>
+#include <glm/glm.hpp>
 #include "state.h"
 
 class Shader;
 class Texture;
+class Camera;
 class Font;
 class Text;
 
@@ -25,6 +27,10 @@ private:
 	GLuint vbo_, ebo_, vao_;
 	std::unique_ptr<Shader> shader_;
 	std::unique_ptr<Texture> texture_;
+
+	std::unique_ptr<Camera> camera_;
+	glm::ivec3 input_ = { 0, 0, 0 };
+	float mouse_sensitivity_ = 0.001f;
 
 	std::unique_ptr<Shader> text_shader_;
 	std::unique_ptr<Font> font_;
