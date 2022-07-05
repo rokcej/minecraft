@@ -10,6 +10,7 @@
 #include <src/text/font.h>
 #include <src/text/text.h>
 #include <src/utils/math.h>
+#include <src/world/chunk.h>
 
 GameState::GameState(Window* window) : State(window) {
 	window_->SetCursorMode(Window::CursorMode::kDisabled);
@@ -21,73 +22,14 @@ GameState::GameState(Window* window) : State(window) {
 	camera_ = std::make_unique<Camera>();
 	camera_->SetAspectRatio((float)window->GetWidth() / (float)window->GetHeight());
 
-	// Data
-	const GLfloat vertices[] = {
-		// Position       // UV
-		// Left
-		-0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
-		-0.5f, -0.5f, +0.5f, 1.0f, 0.0f,
-		-0.5f, +0.5f, +0.5f, 1.0f, 1.0f,
-		-0.5f, +0.5f, -0.5f, 0.0f, 1.0f,
-		// Right
-		+0.5f, -0.5f, +0.5f, 0.0f, 0.0f,
-		+0.5f, -0.5f, -0.5f, 1.0f, 0.0f,
-		+0.5f, +0.5f, -0.5f, 1.0f, 1.0f,
-		+0.5f, +0.5f, +0.5f, 0.0f, 1.0f,
-		// Bottom
-		+0.5f, -0.5f, +0.5f, 0.0f, 0.0f,
-		-0.5f, -0.5f, +0.5f, 1.0f, 0.0f,
-		-0.5f, -0.5f, -0.5f, 1.0f, 1.0f,
-		+0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-		// Top
-		-0.5f, +0.5f, +0.5f, 0.0f, 0.0f,
-		+0.5f, +0.5f, +0.5f, 1.0f, 0.0f,
-		+0.5f, +0.5f, -0.5f, 1.0f, 1.0f,
-		-0.5f, +0.5f, -0.5f, 0.0f, 1.0f,
-		// Back
-		+0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
-		-0.5f, -0.5f, -0.5f, 1.0f, 0.0f,
-		-0.5f, +0.5f, -0.5f, 1.0f, 1.0f,
-		+0.5f, +0.5f, -0.5f, 0.0f, 1.0f,
-		// Front
-		-0.5f, -0.5f, +0.5f, 0.0f, 0.0f,
-		+0.5f, -0.5f, +0.5f, 1.0f, 0.0f,
-		+0.5f, +0.5f, +0.5f, 1.0f, 1.0f,
-		-0.5f, +0.5f, +0.5f, 0.0f, 1.0f
-	};
-
-	GLuint indices[] = {
-		 0,  1,  2,  2,  3,  0,
-		 4,  5,  6,  6,  7,  4,
-		 8,  9, 10, 10, 11,  8,
-		12, 13, 14, 14, 15, 12,
-		16, 17, 18, 18, 19, 16,
-		20, 21, 22, 22, 23, 20
-	};
-
-	glGenVertexArrays(1, &vao_);
-	glGenBuffers(1, &vbo_);
-	glGenBuffers(1, &ebo_);
-
-	glBindVertexArray(vao_);
-
-	glBindBuffer(GL_ARRAY_BUFFER, vbo_);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
-
-	// VAOs store the following calls:
-	//   -For VBOs: glVertexAttribPointer and glEnableVertexAttribArray --> we CAN unbind VBOs
-	//   -For EBOs: glBindBuffer --> we CAN'T unbind EBOs
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
-
+	int range = 3;
+	for (int x = -range; x <= range; ++x) {
+		for (int z = -range; z <= range; ++z) {
+			for (int y = -range; y < 0; ++y) {
+				chunks_.push_back(new Chunk(glm::vec3(x, y, z) * 16.0f));
+			}
+		}
+	}
 
 	// Text
 	text_shader_ = std::make_unique<Shader>("data/shaders/text.vert", "data/shaders/text.frag");
@@ -96,9 +38,7 @@ GameState::GameState(Window* window) : State(window) {
 }
 
 GameState::~GameState() {
-	glDeleteVertexArrays(1, &vao_);
-	glDeleteBuffers(1, &vbo_);
-	glDeleteBuffers(1, &ebo_);
+
 }
 
 void GameState::Update(float dt) {
@@ -118,7 +58,7 @@ void GameState::Update(float dt) {
 		glm::vec3 up(0.0f, 1.0f, 0.0f);
 		glm::vec3 right = glm::cross(forward, up);
 
-		pos += dt * (norm_input.x * right + norm_input.y * up + norm_input.z * -forward);
+		pos += dt * (norm_input.x * right + norm_input.y * up + norm_input.z * -forward) * 5.0f;
 		camera_->SetPosition(pos);
 	}
 
@@ -155,11 +95,14 @@ void GameState::Render() {
 	glm::mat4 pvm_mat = camera_->GetProjViewMat() * model_mat;
 	shader_->SetMatrix4("uPVMMat", pvm_mat);
 
-	glBindVertexArray(vao_);
-	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+	for (const Chunk* chunk : chunks_) {
+		glBindVertexArray(chunk->vao_);
+		glDrawElements(GL_TRIANGLES, chunk->num_indices_, GL_UNSIGNED_INT, 0);
+	}
 
 
 	// UI
+	glClear(GL_DEPTH_BUFFER_BIT);
 	text_shader_->Use();
 	glActiveTexture(GL_TEXTURE0);
 

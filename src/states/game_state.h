@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <vector>
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 #include "state.h"
@@ -10,6 +11,8 @@ class Texture;
 class Camera;
 class Font;
 class Text;
+
+class Chunk;
 
 class GameState : public State {
 public:
@@ -24,9 +27,9 @@ public:
 	void CursorPosCallback(double x, double y) override;
 
 private:
-	GLuint vbo_, ebo_, vao_;
 	std::unique_ptr<Shader> shader_;
 	std::unique_ptr<Texture> texture_;
+	std::vector<Chunk*> chunks_;
 
 	std::unique_ptr<Camera> camera_;
 	glm::ivec3 input_ = { 0, 0, 0 };
