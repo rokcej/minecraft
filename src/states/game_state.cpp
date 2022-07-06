@@ -21,8 +21,9 @@ GameState::GameState(Window* window) : State(window) {
 
 	camera_ = std::make_unique<Camera>();
 	camera_->SetAspectRatio((float)window->GetWidth() / (float)window->GetHeight());
+	camera_->SetPosition(glm::vec3(0.0f, 1.8f, 0.0f));
 
-	int range = 3;
+	int range = 5;
 	for (int x = -range; x <= range; ++x) {
 		for (int z = -range; z <= range; ++z) {
 			for (int y = -range; y < 0; ++y) {

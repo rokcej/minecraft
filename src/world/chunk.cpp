@@ -47,6 +47,15 @@ const GLuint kQuadIndices[] = {
 	0, 1, 2, 0, 2, 3
 };
 
+const glm::ivec3 kSideToDir[] = {
+	{ -1.0f,  0.0f,  0.0f }, // Left
+	{ +1.0f,  0.0f,  0.0f }, // Right
+	{  0.0f, -1.0f,  0.0f }, // Bottom
+	{  0.0f, +1.0f,  0.0f }, // Top
+	{  0.0f,  0.0f, -1.0f }, // Back
+	{  0.0f,  0.0f, +1.0f }  // Front
+};
+
 
 Chunk::Chunk(glm::vec3 pos) {
 	pos_ = pos;
@@ -97,6 +106,26 @@ void Chunk::GenerateMesh() {
 
 				glm::vec3 offset(x, y, z);
 				for (int side = 0; side < 6; ++side) {
+					int dim = side / 2;
+					int dir = (side % 2) * 2 - 1;
+
+					glm::ivec3 neigh = glm::ivec3(x, y, z);
+					neigh[dim] += dir;
+					if (neigh[dim] >= 0 && neigh[dim] < 16) {
+						int j = neigh.x + 16 * (neigh.y + 16 * neigh.z);
+						if (data_[j] != 0) {
+							continue;
+						}
+					}
+
+					/*glm::ivec3 neigh = glm::ivec3(x, y, z) + kSideToDir[side];
+					if (neigh.x >= 0 && neigh.x < 16 && neigh.y >= 0 && neigh.y < 16 && neigh.z >= 0 && neigh.z < 16) {
+						int j = neigh.x + 16 * (neigh.y + 16 * neigh.z);
+						if (data_[j] != 0) {
+							continue;
+						}
+					}*/
+
 					for (int corner = 0; corner < 4; ++corner) {
 						glm::vec3 pos = kCubeVertices[4 * side + corner] + offset + pos_;
 						glm::vec2 uv = kQuadUVs[corner];
