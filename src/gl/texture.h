@@ -7,12 +7,14 @@
 class TextureParams {
 public:
 	TextureParams() = default;
-	TextureParams(GLuint wrap_s, GLuint wrap_t, GLuint min_filter, GLuint mag_filter);
+	TextureParams(GLuint wrap_s, GLuint wrap_t, GLuint min_filter, GLuint mag_filter, bool generate_mipmap = false, float max_anisotropy = 1.0f);
 
 	GLuint wrap_s_ = GL_CLAMP_TO_EDGE;
 	GLuint wrap_t_ = GL_CLAMP_TO_EDGE;
 	GLuint min_filter_ = GL_LINEAR;
 	GLuint mag_filter_ = GL_LINEAR;
+	bool generate_mipmap_ = false;
+	float max_anisotropy_ = 1.0f;
 };
 
 class Texture {
@@ -35,6 +37,7 @@ private:
 	GLuint internal_format_;
 	int width_;
 	int height_;
+	bool has_mipmap_;
 
 	static const int kFallbackWidth;
 	static const int kFallbackHeight;

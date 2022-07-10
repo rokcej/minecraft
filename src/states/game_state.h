@@ -2,9 +2,12 @@
 
 #include <memory>
 #include <vector>
+#include <unordered_map>
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 #include "state.h"
+
+#include <src/utils/hash.h>
 
 class Shader;
 class Texture;
@@ -29,7 +32,7 @@ public:
 private:
 	std::unique_ptr<Shader> shader_;
 	std::unique_ptr<Texture> texture_;
-	std::vector<Chunk*> chunks_;
+	std::unordered_map<glm::ivec3, std::unique_ptr<Chunk>, hash::Hash<glm::ivec3>> chunks_;
 
 	std::unique_ptr<Camera> camera_;
 	glm::ivec3 input_ = { 0, 0, 0 };

@@ -17,7 +17,7 @@ GameState::GameState(Window* window) : State(window) {
 	window_->SetCursorPos(0.0, 0.0); // Center cursor for camera movement
 
 	shader_ = std::make_unique<Shader>("data/shaders/basic.vert", "data/shaders/basic.frag");
-	texture_ = std::make_unique<Texture>("data/textures/face.png", TextureParams(GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_NEAREST)); // GL_LINEAR_MIPMAP_LINEAR
+	texture_ = std::make_unique<Texture>("data/textures/face.png", TextureParams(GL_REPEAT, GL_REPEAT, GL_NEAREST_MIPMAP_LINEAR, GL_NEAREST, true, 16.0f));
 
 	camera_ = std::make_unique<Camera>();
 	camera_->SetAspectRatio((float)window->GetWidth() / (float)window->GetHeight());
@@ -27,7 +27,7 @@ GameState::GameState(Window* window) : State(window) {
 	for (int x = -range; x <= range; ++x) {
 		for (int z = -range; z <= range; ++z) {
 			for (int y = -range; y < 0; ++y) {
-				chunks_.push_back(new Chunk(glm::vec3(x, y, z) * 16.0f));
+				chunks_.emplace(glm::ivec3(x, y, z), new Chunk(glm::vec3(x, y, z) * 16.0f));
 			}
 		}
 	}
@@ -96,7 +96,7 @@ void GameState::Render() {
 	glm::mat4 pvm_mat = camera_->GetProjViewMat() * model_mat;
 	shader_->SetMatrix4("uPVMMat", pvm_mat);
 
-	for (const Chunk* chunk : chunks_) {
+	for (const auto& [_, chunk] : chunks_) {
 		glBindVertexArray(chunk->vao_);
 		glDrawElements(GL_TRIANGLES, chunk->num_indices_, GL_UNSIGNED_INT, 0);
 	}

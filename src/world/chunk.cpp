@@ -59,7 +59,7 @@ const glm::ivec3 kSideToDir[] = {
 
 Chunk::Chunk(glm::vec3 pos) {
 	pos_ = pos;
-	for (int i = 0; i < 4096; ++i) {
+	for (int i = 0; i < kVolume; ++i) {
 		data_[i] = 1;
 	}
 
@@ -96,10 +96,10 @@ Chunk::~Chunk() {
 void Chunk::GenerateMesh() {
 	std::vector<GLfloat> vertices;
 	int num_quads = 0;
-	for (int x = 0; x < 16; ++x) {
-		for (int y = 0; y < 16; ++y) {
-			for (int z = 0; z < 16; ++z) {
-				int i = x + 16 * (y + 16 * z);
+	for (int x = 0; x < kSize; ++x) {
+		for (int y = 0; y < kSize; ++y) {
+			for (int z = 0; z < kSize; ++z) {
+				int i = GetDataIndex({ x, y, z });
 				if (data_[i] == 0) {
 					continue;
 				}
@@ -111,8 +111,8 @@ void Chunk::GenerateMesh() {
 
 					glm::ivec3 neigh = glm::ivec3(x, y, z);
 					neigh[dim] += dir;
-					if (neigh[dim] >= 0 && neigh[dim] < 16) {
-						int j = neigh.x + 16 * (neigh.y + 16 * neigh.z);
+					if (neigh[dim] >= 0 && neigh[dim] < kSize) {
+						int j = GetDataIndex(neigh);
 						if (data_[j] != 0) {
 							continue;
 						}
@@ -156,4 +156,8 @@ void Chunk::GenerateMesh() {
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
+}
+
+int Chunk::GetDataIndex(glm::ivec3 pos) const {
+	return pos.x + kSize * (pos.y + kSize * pos.z);
 }
