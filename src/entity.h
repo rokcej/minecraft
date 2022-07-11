@@ -6,6 +6,8 @@ class Entity {
 public:
 	Entity() = default;
 
+	glm::vec3 GetForward() const;
+
 	void SetPosition(const glm::vec3& position);
 	void SetRotation(const glm::vec3& rotation);
 	const glm::vec3& GetPosition() const;

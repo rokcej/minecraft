@@ -1,6 +1,7 @@
 #include "game_state.h"
 
 #include <iostream>
+#include <format>
 #include <cmath>
 #include <GLFW/glfw3.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -10,6 +11,8 @@
 #include <src/text/font.h>
 #include <src/text/text.h>
 #include <src/utils/math.h>
+
+#include <src/world/chunk_manager.h>
 #include <src/world/chunk.h>
 
 GameState::GameState(Window* window) : State(window) {
@@ -23,19 +26,13 @@ GameState::GameState(Window* window) : State(window) {
 	camera_->SetAspectRatio((float)window->GetWidth() / (float)window->GetHeight());
 	camera_->SetPosition(glm::vec3(0.0f, 1.8f, 0.0f));
 
-	int range = 5;
-	for (int x = -range; x <= range; ++x) {
-		for (int z = -range; z <= range; ++z) {
-			for (int y = -range; y < 0; ++y) {
-				chunks_.emplace(glm::ivec3(x, y, z), new Chunk(glm::vec3(x, y, z) * 16.0f));
-			}
-		}
-	}
+	chunk_manager_ = std::make_unique<ChunkManager>();
 
 	// Text
 	text_shader_ = std::make_unique<Shader>("data/shaders/text.vert", "data/shaders/text.frag");
 	font_ = std::make_unique<Font>("data/fonts/Roboto-Regular.ttf", 24);
 	fps_text_ = std::make_unique<Text>("0 FPS", font_.get());
+	debug_text_ = std::make_unique<Text>("", font_.get());
 }
 
 GameState::~GameState() {
@@ -50,30 +47,39 @@ void GameState::Update(float dt) {
 		glm::vec3 pos = camera_->GetPosition();
 		glm::vec3 rot = camera_->GetRotation();
 
-		float cos_rot_x = std::cos(rot.x);
-		glm::vec3 forward(
-			-std::sin(rot.y) * cos_rot_x,
-			 std::sin(rot.x),
-			-std::cos(rot.y) * cos_rot_x
-		);
+		glm::vec3 forward = camera_->GetForward();
 		glm::vec3 up(0.0f, 1.0f, 0.0f);
 		glm::vec3 right = glm::cross(forward, up);
 
-		pos += dt * (norm_input.x * right + norm_input.y * up + norm_input.z * -forward) * 5.0f;
+		float speed = sprinting_ ? 20.0f : 5.0f;
+		pos += speed * dt * (norm_input.x * right + norm_input.y * up + norm_input.z * -forward);
 		camera_->SetPosition(pos);
 	}
 
 	// 3D
 	camera_->Update();
+	chunk_manager_->Update(camera_->GetPosition());
 
 	// FPS
 	++fps_count_;
 	fps_time_ += dt;
 	if (fps_time_ >= 1.0f) {
-		fps_ = (int)std::roundf((float)fps_count_ / fps_time_);
+		fps_ = (int)std::round((float)fps_count_ / fps_time_);
 		fps_text_->SetText(std::to_string(fps_) + " FPS");
 		fps_count_ = 0;
 		fps_time_ = 0.0f;
+	}
+
+	// Debugging
+	if (show_debug_info_) {
+		glm::vec3 pos = camera_->GetPosition();
+		glm::ivec3 chunk_pos(glm::floor(pos / (float)Chunk::kSize));
+		glm::vec3 dir = camera_->GetForward();
+		debug_text_->SetText(
+			std::format("XYZ: {:.4f} / {:.4f} / {:.4f}\n", pos.x, pos.y, pos.z) +
+			std::format("Chunk: {}, {}, {}\n", chunk_pos.x, chunk_pos.y, chunk_pos.z) +
+			std::format("Direction: {:.2f}, {:.2f}, {:.2f}", dir.x, dir.y, dir.z)
+		);
 	}
 }
 
@@ -96,7 +102,7 @@ void GameState::Render() {
 	glm::mat4 pvm_mat = camera_->GetProjViewMat() * model_mat;
 	shader_->SetMatrix4("uPVMMat", pvm_mat);
 
-	for (const auto& [_, chunk] : chunks_) {
+	for (const auto& [_, chunk] : chunk_manager_->GetChunks()) {
 		glBindVertexArray(chunk->vao_);
 		glDrawElements(GL_TRIANGLES, chunk->num_indices_, GL_UNSIGNED_INT, 0);
 	}
@@ -112,6 +118,11 @@ void GameState::Render() {
 
 	fps_text_->SetPosition(glm::vec2(8.0f, window_->GetHeight() - fps_text_->GetHeight() - 4.0f));
 	fps_text_->Render(text_shader_);
+
+	if (show_debug_info_) {
+		debug_text_->SetPosition(glm::vec2(8.0f, window_->GetHeight() - 3 * fps_text_->GetHeight() - 4.0f));
+		debug_text_->Render(text_shader_);
+	}
 }
 
 void GameState::FramebufferSizeCallback(int width, int height) {
@@ -128,13 +139,18 @@ void GameState::KeyCallback(int key, int scancode, int action, int mods) {
 	}
 
 	switch (key) {
-	// Options
+		// Options
 	case GLFW_KEY_ESCAPE:
 		if (action == GLFW_PRESS) {
 			window_->Close();
 		}
 		break;
-	// Movement
+	case GLFW_KEY_F3:
+		if (action == GLFW_PRESS) {
+			show_debug_info_ = !show_debug_info_;
+		}
+		break;
+		// Movement
 	case GLFW_KEY_W:
 		input_.z -= input_diff;
 		break;
@@ -153,6 +169,14 @@ void GameState::KeyCallback(int key, int scancode, int action, int mods) {
 	case GLFW_KEY_LEFT_CONTROL:
 		input_.y -= input_diff;
 		break;
+		// Modifiers
+	case GLFW_KEY_LEFT_SHIFT:
+		if (action == GLFW_PRESS) {
+			sprinting_ = true;
+		} else if (action == GLFW_RELEASE) {
+			sprinting_ = false;
+		}
+		break;
 	}
 }
 
@@ -163,7 +187,7 @@ void GameState::CursorPosCallback(double x, double y) {
 	rot.y -= (float)x * mouse_sensitivity_; // Yaw
 
 	// Wrap yaw to [-pi, pi]
-	rot.y = std::fmodf(rot.y + math::kPi, 2.0f * math::kPi) - math::kPi;
+	rot.y = std::fmod(rot.y + math::kPi, 2.0f * math::kPi) - math::kPi;
 
 	// Limit pitch to [-pi/2, pi/2]
 	// TODO: Remove epsilon correction

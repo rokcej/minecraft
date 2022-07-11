@@ -50,11 +50,17 @@ void Text::UpdateVertices() {
 	std::vector<TextVertex> vertices(6 * text_.length());
 	int i = 0;
 	float advance = 0.0f;
+	float y_offset = 0.0f;
 	for (const unsigned char& c : text_) {
+		if (c == '\n') {
+			advance = 0;
+			y_offset -= (float)GetHeight();
+			continue;
+		}
 		const FontCharacter& ch = font_->GetCharacter(c);
 
 		float x0 = advance + ch.bearing_.x;
-		float y0 = (float)(ch.bearing_.y - ch.size_.y);
+		float y0 = (float)(ch.bearing_.y - ch.size_.y) + y_offset;
 
 		float x1 = x0 + ch.size_.x;
 		float y1 = y0 + ch.size_.y;

@@ -57,10 +57,10 @@ const glm::ivec3 kSideToDir[] = {
 };
 
 
-Chunk::Chunk(glm::vec3 pos) {
-	pos_ = pos;
+Chunk::Chunk(glm::ivec3 index) {
+	index_ = index;
 	for (int i = 0; i < kVolume; ++i) {
-		data_[i] = 1;
+		data_[i] = index.y >= 0 ? 0 : 1;
 	}
 
 	glGenVertexArrays(1, &vao_);
@@ -96,6 +96,7 @@ Chunk::~Chunk() {
 void Chunk::GenerateMesh() {
 	std::vector<GLfloat> vertices;
 	int num_quads = 0;
+	glm::vec3 chunk_pos(kSize * index_);
 	for (int x = 0; x < kSize; ++x) {
 		for (int y = 0; y < kSize; ++y) {
 			for (int z = 0; z < kSize; ++z) {
@@ -104,7 +105,7 @@ void Chunk::GenerateMesh() {
 					continue;
 				}
 
-				glm::vec3 offset(x, y, z);
+				glm::vec3 block_offset(x, y, z);
 				for (int side = 0; side < 6; ++side) {
 					int dim = side / 2;
 					int dir = (side % 2) * 2 - 1;
@@ -127,7 +128,7 @@ void Chunk::GenerateMesh() {
 					}*/
 
 					for (int corner = 0; corner < 4; ++corner) {
-						glm::vec3 pos = kCubeVertices[4 * side + corner] + offset + pos_;
+						glm::vec3 pos = kCubeVertices[4 * side + corner] + block_offset + chunk_pos;
 						glm::vec2 uv = kQuadUVs[corner];
 						vertices.insert(vertices.end(), { pos.x, pos.y, pos.z });
 						vertices.insert(vertices.end(), { uv.x, uv.y });

@@ -15,7 +15,7 @@ class Camera;
 class Font;
 class Text;
 
-class Chunk;
+class ChunkManager;
 
 class GameState : public State {
 public:
@@ -32,10 +32,12 @@ public:
 private:
 	std::unique_ptr<Shader> shader_;
 	std::unique_ptr<Texture> texture_;
-	std::unordered_map<glm::ivec3, std::unique_ptr<Chunk>, hash::Hash<glm::ivec3>> chunks_;
+	
+	std::unique_ptr<ChunkManager> chunk_manager_;
 
 	std::unique_ptr<Camera> camera_;
 	glm::ivec3 input_ = { 0, 0, 0 };
+	bool sprinting_ = false;
 	float mouse_sensitivity_ = 0.001f;
 
 	std::unique_ptr<Shader> text_shader_;
@@ -45,5 +47,8 @@ private:
 	int fps_count_ = 0;
 	float fps_time_ = 0.0f;
 	int fps_ = 0;
+
+	std::unique_ptr<Text> debug_text_;
+	bool show_debug_info_ = true;
 
 };

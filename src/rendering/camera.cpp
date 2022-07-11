@@ -7,12 +7,7 @@ Camera::Camera() {
 }
 
 void Camera::Update() {
-	float cos_rot_x = std::cos(rotation_.x);
-	glm::vec3 forward(
-		-std::sin(rotation_.y) * cos_rot_x,
-		 std::sin(rotation_.x),
-		-std::cos(rotation_.y) * cos_rot_x
-	);
+	glm::vec3 forward = GetForward();
 	glm::mat4 view_mat = glm::lookAt(
 		position_,
 		position_ + forward,
