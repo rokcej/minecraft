@@ -17,12 +17,16 @@ void Shader::Use() const {
 	glUseProgram(id_);
 }
 
-void Shader::SetVector2(const char* name, float x, float y) {
-	glUniform2f(glGetUniformLocation(id_, name), x, y);
+void Shader::SetVector2(const char* name, const glm::vec2& vector) {
+	glUniform2f(glGetUniformLocation(id_, name), vector.x, vector.y);
 }
 
-void Shader::SetVector3(const char* name, float x, float y, float z) {
-	glUniform3f(glGetUniformLocation(id_, name), x, y, z);
+void Shader::SetVector3(const char* name, const glm::vec3& vector) {
+	glUniform3f(glGetUniformLocation(id_, name), vector.x, vector.y, vector.z);
+}
+
+void Shader::SetVector4(const char* name, const glm::vec4& vector) {
+	glUniform4f(glGetUniformLocation(id_, name), vector.x, vector.y, vector.z, vector.w);
 }
 
 void Shader::SetMatrix4(const char* name, const glm::mat4& matrix) {

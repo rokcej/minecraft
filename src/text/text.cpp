@@ -84,11 +84,17 @@ void Text::UpdateVertices() {
 }
 
 void Text::Render(const std::unique_ptr<Shader>& shader) const {
-	shader->SetVector2("uPos", pos_.x, pos_.y);
-	shader->SetVector3("uColor", color_.r, color_.g, color_.b);
+	font_->GetAtlas()->Bind();
 	glBindVertexArray(vao_);
 
-	font_->GetAtlas()->Bind();
+	if (shadow_enabled_) {
+		shader->SetVector2("uPos", pos_ + shadow_offset_);
+		shader->SetVector4("uColor", shadow_color_);
+		glDrawArrays(GL_TRIANGLES, 0, 6 * (GLsizei)text_.length());
+	}
+
+	shader->SetVector2("uPos", pos_);
+	shader->SetVector4("uColor", color_);
 	glDrawArrays(GL_TRIANGLES, 0, 6 * (GLsizei)text_.length());
 }
 
@@ -100,6 +106,12 @@ void Text::SetPosition(const glm::vec2& pos) {
 	pos_ = pos;
 }
 
-void Text::SetColor(const glm::vec3& color) {
+void Text::SetColor(const glm::vec4& color) {
 	color_ = color;
+}
+
+void Text::SetShadow(int distance, const glm::vec4& color) {
+	shadow_enabled_ = true;
+	shadow_offset_ = glm::vec2((float)distance, (float)-distance);
+	shadow_color_ = color;
 }

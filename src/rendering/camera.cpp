@@ -28,5 +28,5 @@ const glm::mat4& Camera::GetProjViewMat() const {
 }
 
 void Camera::UpdateProjMat() {
-	proj_mat_ = glm::perspective(glm::radians(fov_), aspect_ratio_, 0.1f, 100.0f);
+	proj_mat_ = glm::perspective(glm::radians(fov_), aspect_ratio_, 0.1f, 256.0f);
 }

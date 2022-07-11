@@ -21,6 +21,8 @@ int main() {
 		throw std::runtime_error("Failed to initialize GLAD");
 	}
 
+	glEnable(GL_MULTISAMPLE);
+
 	std::unique_ptr<State> state = std::make_unique<GameState>(&window);
 	window.SetState(state.get());
 

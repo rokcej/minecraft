@@ -19,8 +19,9 @@ public:
 	void Use() const;
 
 	// Using `const char*` is much faster than `const string&`
-	void SetVector2(const char* name, float x, float y);
-	void SetVector3(const char* name, float x, float y, float z);
+	void SetVector2(const char* name, const glm::vec2& vector);
+	void SetVector3(const char* name, const glm::vec3& vector);
+	void SetVector4(const char* name, const glm::vec4& vector);
 	void SetMatrix4(const char* name, const glm::mat4& matrix);
 
 private:

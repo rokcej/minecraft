@@ -10,6 +10,8 @@ Window::Window(const std::string& title) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
+	glfwWindowHint(GLFW_SAMPLES, 4);
+
 	glfw_window_ = glfwCreateWindow(width_, height_, title.c_str(), NULL, NULL);
 	if (!glfw_window_) {
 		throw std::runtime_error("Failed to create GLFW window");

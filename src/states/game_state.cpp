@@ -33,6 +33,10 @@ GameState::GameState(Window* window) : State(window) {
 	font_ = std::make_unique<Font>("data/fonts/Roboto-Regular.ttf", 24);
 	fps_text_ = std::make_unique<Text>("0 FPS", font_.get());
 	debug_text_ = std::make_unique<Text>("", font_.get());
+
+	glm::vec4 shadow_color(glm::vec3(0.0f), 0.5f);
+	fps_text_->SetShadow(1, shadow_color);
+	debug_text_->SetShadow(1, shadow_color);
 }
 
 GameState::~GameState() {
@@ -109,7 +113,7 @@ void GameState::Render() {
 
 
 	// UI
-	glClear(GL_DEPTH_BUFFER_BIT);
+	glDisable(GL_DEPTH_TEST);
 	text_shader_->Use();
 	glActiveTexture(GL_TEXTURE0);
 
