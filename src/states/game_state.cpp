@@ -1,7 +1,6 @@
 #include "game_state.h"
 
 #include <iostream>
-#include <format>
 #include <cmath>
 #include <GLFW/glfw3.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -12,6 +11,7 @@
 #include <src/text/text.h>
 #include <src/utils/math.h>
 
+#include <src/utils/debug.h>
 #include <src/world/chunk_manager.h>
 #include <src/world/chunk.h>
 
@@ -76,9 +76,9 @@ void GameState::Update(float dt) {
 		glm::ivec3 chunk_pos(glm::floor(pos / (float)Chunk::kSize));
 		glm::vec3 dir = camera_->GetForward();
 		debug_text_->SetText(
-			std::format("XYZ: {:.4f} / {:.4f} / {:.4f}\n", pos.x, pos.y, pos.z) +
-			std::format("Chunk: {}, {}, {}\n", chunk_pos.x, chunk_pos.y, chunk_pos.z) +
-			std::format("Direction: {:.2f}, {:.2f}, {:.2f}", dir.x, dir.y, dir.z)
+			debug::FormatString("XYZ: %.4f / %.4f / %.4f\n", pos.x, pos.y, pos.z) +
+			debug::FormatString("Chunk: %d, %d, %d\n", chunk_pos.x, chunk_pos.y, chunk_pos.z) +
+			debug::FormatString("Direction: %.2f, %.2f, %.2f", dir.x, dir.y, dir.z)
 		);
 	}
 }
