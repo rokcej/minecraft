@@ -29,10 +29,10 @@ GameState::GameState(Window* window) : State(window) {
 	chunk_manager_ = std::make_unique<ChunkManager>();
 
 	// Text
-	text_shader_ = std::make_unique<Shader>("data/shaders/text.vert", "data/shaders/text.frag");
-	font_ = std::make_unique<Font>("data/fonts/Roboto-Regular.ttf", 24);
-	fps_text_ = std::make_unique<Text>("0 FPS", font_.get());
-	debug_text_ = std::make_unique<Text>("", font_.get());
+	text_shader_ = std::make_unique<Shader>("data/shaders/text.vert", "data/shaders/text_sdf.frag");
+	font_ = std::make_unique<Font>("data/fonts/Roboto-Regular.ttf", 144);
+	fps_text_ = std::make_unique<Text>("0 FPS", 24, font_.get());
+	debug_text_ = std::make_unique<Text>("", 24, font_.get());
 
 	glm::vec4 shadow_color(glm::vec3(0.0f), 0.5f);
 	fps_text_->SetShadow(1, shadow_color);
@@ -120,11 +120,11 @@ void GameState::Render() {
 	glm::mat4 ui_proj_mat = glm::ortho(0.0f, (float)window_->GetWidth(), 0.0f, (float)window_->GetHeight(), -1.0f, 1.0f);
 	text_shader_->SetMatrix4("uProjMat", ui_proj_mat);
 
-	fps_text_->SetPosition(glm::vec2(8.0f, window_->GetHeight() - fps_text_->GetHeight() - 4.0f));
+	fps_text_->SetPosition(glm::vec2(8.0f, window_->GetHeight() - fps_text_->GetSize() - 4.0f));
 	fps_text_->Render(text_shader_);
 
 	if (show_debug_info_) {
-		debug_text_->SetPosition(glm::vec2(8.0f, window_->GetHeight() - 3 * fps_text_->GetHeight() - 4.0f));
+		debug_text_->SetPosition(glm::vec2(8.0f, window_->GetHeight() - 3 * fps_text_->GetSize() - 4.0f));
 		debug_text_->Render(text_shader_);
 	}
 }

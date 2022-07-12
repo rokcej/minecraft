@@ -27,7 +27,6 @@ Font::Font(const std::string& file_path, int height) {
 		std::cerr << "[ERROR] Failed to load font " << file_path << std::endl;
 	}
 	FT_Set_Pixel_Sizes(face, 0, height);
-	height_ = height;
 	
 
 	// Load glyphs
@@ -36,8 +35,12 @@ Font::Font(const std::string& file_path, int height) {
 	int rect_area_sum = 0;
 
 	for (unsigned char c = kFirstChar; c < kFirstChar + kNumChars; ++c) {
-		if (FT_Load_Char(face, c, FT_LOAD_RENDER)) {
+		if (FT_Load_Char(face, c, FT_LOAD_DEFAULT)) {
 			std::cerr << "[ERROR] Failed to load Glyph " << c << std::endl;
+			continue;
+		}
+		if (FT_Render_Glyph(face->glyph, FT_RENDER_MODE_SDF)) {
+			std::cerr << "[ERROR] Failed to render Glyph " << c << std::endl;
 			continue;
 		}
 		if (FT_Get_Glyph(face->glyph, &(glyphs[c - kFirstChar]))) {
@@ -81,12 +84,13 @@ Font::Font(const std::string& file_path, int height) {
 		atlas_->SubImage(rect.x, rect.y, rect.w, rect.h, bit_glyph->bitmap.buffer);
 
 		const glm::vec2 atlas_size(atlas_width, atlas_height);
+		const float font_size = (float)height;
 		characters_.insert({ c, {
 			glm::vec2(rect.x, rect.y) / atlas_size,
 			glm::vec2(rect.x + rect.w, rect.y + rect.h) / atlas_size,
-			glm::ivec2(rect.w, rect.h),
-			glm::ivec2(bit_glyph->left, bit_glyph->top),
-			(unsigned int)bit_glyph->root.advance.x >> 16
+			glm::vec2(rect.w, rect.h) / font_size,
+			glm::vec2(bit_glyph->left, bit_glyph->top) / font_size,
+			(float)(bit_glyph->root.advance.x >> 16) / font_size
 		} });
 
 		FT_Done_Glyph(glyphs[c - kFirstChar]);
@@ -101,10 +105,6 @@ Font::Font(const std::string& file_path, int height) {
 
 Font::~Font() {
 
-}
-
-int Font::GetHeight() const {
-	return height_;
 }
 
 const FontCharacter& Font::GetCharacter(char c) const {

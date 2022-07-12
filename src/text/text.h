@@ -10,13 +10,14 @@ class Font;
 
 class Text {
 public:
-	Text(const std::string& text, Font* font);
+	Text(const std::string& text, int size, Font* font);
 	~Text();
 
 	void SetText(const std::string& text);
 	void Render(const std::unique_ptr<Shader>& shader) const;
 
-	int GetHeight() const;
+	int GetSize() const;
+
 	void SetPosition(const glm::vec2& pos);
 	void SetColor(const glm::vec4& color);
 	void SetShadow(int distance, const glm::vec4& color);
@@ -26,6 +27,7 @@ private:
 
 private:
 	std::string text_;
+	int size_;
 	Font* font_;
 
 	glm::vec2 pos_ = { 0.0f, 0.0f };

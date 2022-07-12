@@ -14,8 +14,9 @@ struct TextVertex {
 	GLfloat v;
 };
 
-Text::Text(const std::string& text, Font* font) {
+Text::Text(const std::string& text, int size, Font* font) {
 	text_ = text;
+	size_ = size;
 	font_ = font;
 
 	glGenVertexArrays(1, &vao_);
@@ -51,29 +52,27 @@ void Text::UpdateVertices() {
 	int i = 0;
 	float advance = 0.0f;
 	float y_offset = 0.0f;
+
 	for (const unsigned char& c : text_) {
 		if (c == '\n') {
 			advance = 0;
-			y_offset -= (float)GetHeight();
+			y_offset -= 1.0f;
 			continue;
 		}
 		const FontCharacter& ch = font_->GetCharacter(c);
 
-		float x0 = advance + ch.bearing_.x;
-		float y0 = (float)(ch.bearing_.y - ch.size_.y) + y_offset;
-
-		float x1 = x0 + ch.size_.x;
-		float y1 = y0 + ch.size_.y;
+		glm::vec2 pos0(advance + ch.bearing_.x, y_offset + ch.bearing_.y - ch.size_.y);
+		glm::vec2 pos1 = pos0 + ch.size_;
 
 		const glm::vec2& uv0 = ch.uv_min_;
 		const glm::vec2& uv1 = ch.uv_max_;
 
-		vertices[i++] = { x0, y1, uv0.x, uv0.y };
-		vertices[i++] = { x0, y0, uv0.x, uv1.y };
-		vertices[i++] = { x1, y0, uv1.x, uv1.y };
-		vertices[i++] = { x0, y1, uv0.x, uv0.y };
-		vertices[i++] = { x1, y0, uv1.x, uv1.y };
-		vertices[i++] = { x1, y1, uv1.x, uv0.y };
+		vertices[i++] = { pos0.x, pos1.y, uv0.x, uv0.y };
+		vertices[i++] = { pos0.x, pos0.y, uv0.x, uv1.y };
+		vertices[i++] = { pos1.x, pos0.y, uv1.x, uv1.y };
+		vertices[i++] = { pos0.x, pos1.y, uv0.x, uv0.y };
+		vertices[i++] = { pos1.x, pos0.y, uv1.x, uv1.y };
+		vertices[i++] = { pos1.x, pos1.y, uv1.x, uv0.y };
 
 		// Move position to next glyph
 		advance += ch.advance_;
@@ -87,6 +86,8 @@ void Text::Render(const std::unique_ptr<Shader>& shader) const {
 	font_->GetAtlas()->Bind();
 	glBindVertexArray(vao_);
 
+	shader->SetFloat("uSize", (float)size_);
+
 	if (shadow_enabled_) {
 		shader->SetVector2("uPos", pos_ + shadow_offset_);
 		shader->SetVector4("uColor", shadow_color_);
@@ -98,8 +99,8 @@ void Text::Render(const std::unique_ptr<Shader>& shader) const {
 	glDrawArrays(GL_TRIANGLES, 0, 6 * (GLsizei)text_.length());
 }
 
-int Text::GetHeight() const {
-	return font_->GetHeight();
+int Text::GetSize() const {
+	return size_;
 }
 
 void Text::SetPosition(const glm::vec2& pos) {

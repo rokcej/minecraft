@@ -17,6 +17,10 @@ void Shader::Use() const {
 	glUseProgram(id_);
 }
 
+void Shader::SetFloat(const char* name, float value) {
+	glUniform1f(glGetUniformLocation(id_, name), value);
+}
+
 void Shader::SetVector2(const char* name, const glm::vec2& vector) {
 	glUniform2f(glGetUniformLocation(id_, name), vector.x, vector.y);
 }
