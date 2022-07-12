@@ -20,7 +20,7 @@ public:
 class Texture {
 public:
 	Texture(const std::string& file_path, TextureParams params = TextureParams());
-	Texture(int width, int height, int n_channels, unsigned char* data, TextureParams params = TextureParams());
+	Texture(int width, int height, int num_components, unsigned char* data, TextureParams params = TextureParams());
 	~Texture();
 
 	int GetWidth() const;
@@ -29,14 +29,17 @@ public:
 	void Bind() const;
 	void SubImage(int x, int y, int width, int height, unsigned char* data);
 
+	void SavePNG(const std::string& output_path);
+
 private:
-	void Generate(int width, int height, int n_channels, GLubyte* data, TextureParams params);
+	void Generate(int width, int height, int num_components, GLubyte* data, TextureParams params);
 
 private:
 	GLuint id_;
-	GLuint internal_format_;
 	int width_;
 	int height_;
+	int num_components_;
+	GLuint internal_format_;
 	bool has_mipmap_;
 
 	static const int kFallbackWidth;

@@ -2,7 +2,9 @@
 
 #include <iostream>
 #define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image.h>
+#include <stb_image_write.h>
 
 const int Texture::kFallbackWidth = 2;
 const int Texture::kFallbackHeight = 2;
@@ -11,17 +13,17 @@ const GLubyte Texture::kFallbackData[] = {
     224,  16, 224, 255,  16,  16,  16, 255
 };
 
-Texture::Texture(int width, int height, int n_channels, GLubyte* data, TextureParams params) {
-    Generate(width, height, n_channels, data, params);
+Texture::Texture(int width, int height, int num_components, GLubyte* data, TextureParams params) {
+    Generate(width, height, num_components, data, params);
 }
 
 Texture::Texture(const std::string& file_path, TextureParams params) {
-    int width, height, n_channels;
+    int width, height, num_components;
     stbi_set_flip_vertically_on_load(true);
-    unsigned char* data = stbi_load(file_path.c_str(), &width, &height, &n_channels, 0);
+    unsigned char* data = stbi_load(file_path.c_str(), &width, &height, &num_components, 0);
 
     if (data) {
-        Generate(width, height, n_channels, data, params);
+        Generate(width, height, num_components, data, params);
         stbi_image_free(data);
     } else {
         std::cerr << "[ERROR] Can't load texture " << file_path << std::endl;
@@ -33,9 +35,10 @@ Texture::~Texture() {
 	glDeleteTextures(1, &id_);
 }
 
-void Texture::Generate(int width, int height, int n_channels, GLubyte* data, TextureParams params) {
+void Texture::Generate(int width, int height, int num_components, GLubyte* data, TextureParams params) {
     width_ = width;
     height_ = height;
+    num_components_ = num_components;
     has_mipmap_ = params.generate_mipmap_;
 
     glGenTextures(1, &id_);
@@ -48,12 +51,12 @@ void Texture::Generate(int width, int height, int n_channels, GLubyte* data, Tex
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, params.max_anisotropy_);
 
     GLuint format;
-    switch (n_channels) {
+    switch (num_components_) {
     case 1: format = GL_RED; break;
     case 3: format = GL_RGB; break;
     case 4: format = GL_RGBA; break;
     default:
-        std::cerr << "[ERROR] Unsupported number of channels per pixel: " << n_channels << std::endl;
+        std::cerr << "[ERROR] Unsupported number of channels per pixel: " << num_components_ << std::endl;
         format = GL_RED;
         break;
     }
@@ -88,6 +91,16 @@ void Texture::SubImage(int x, int y, int width, int height, unsigned char* data)
 
 void Texture::Bind() const {
     glBindTexture(GL_TEXTURE_2D, id_);
+}
+
+void Texture::SavePNG(const std::string& output_path) {
+    Bind();
+    std::unique_ptr<GLubyte[]> data(new GLubyte[width_ * height_]);
+    glGetTexImage(GL_TEXTURE_2D, 0, internal_format_, GL_UNSIGNED_BYTE, data.get());
+    int success = stbi_write_png(output_path.c_str(), width_, height_, num_components_, data.get(), width_ * num_components_);
+    if (!success) {
+        std::cerr << "[ERROR] Unable to save texture to " << output_path << std::endl;
+    }
 }
 
 
