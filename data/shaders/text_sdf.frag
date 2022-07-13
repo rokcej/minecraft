@@ -7,8 +7,8 @@
 
 const float SQRT2_2 = 0.70710678118654757; // 1/sqrt(2)
 
-const float SPREAD = 2.0; // Max SDF value (FreeType default value is 2)
-const float SDF_THRESHOLD = 0.166667; // Empirically determined to produce good-looking anti-aliased text
+const float SPREAD = 8.0; // Max SDF value (FreeType default value is 8 (documentation says 2, but it's wrong))
+const float SDF_THRESHOLD = 0.666667; // Empirically determined to produce good-looking anti-aliased text
 
 in vec2 vUV;
 

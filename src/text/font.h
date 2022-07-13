@@ -18,7 +18,8 @@ struct FontCharacter {
 
 class Font {
 public:
-	Font(const std::string& file_path, int height);
+	Font(const std::string& file_path, int nominal_height);
+	Font(const std::string& file_path, int atlas_width, int atlas_height);
 	~Font();
 
 	const FontCharacter& GetCharacter(char c) const;
