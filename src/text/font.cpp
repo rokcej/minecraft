@@ -16,7 +16,7 @@ const int Font::kFirstChar = 32;
 const int Font::kNumChars = 128 - Font::kFirstChar;
 
 // Generate font with specified height
-Font::Font(const std::string& file_path, int nominal_height) {
+Font::Font(const std::string& file_path, int font_height) {
 	// TODO: Move this outside
 	FT_Library library;
 	if (FT_Init_FreeType(&library)) {
@@ -27,7 +27,7 @@ Font::Font(const std::string& file_path, int nominal_height) {
 	if (FT_New_Face((FT_Library)library, file_path.c_str(), 0, &face)) {
 		std::cerr << "[ERROR] Failed to load font " << file_path << std::endl;
 	}
-	FT_Set_Pixel_Sizes(face, 0, nominal_height);
+	FT_Set_Pixel_Sizes(face, 0, font_height);
 	//FT_Property_Set(library, "sdf", "spread", &spread); // #include <freetype/ftmodapi.h>
 
 
@@ -86,7 +86,7 @@ Font::Font(const std::string& file_path, int nominal_height) {
 		atlas_->SubImage(rect.x, rect.y, rect.w, rect.h, bit_glyph->bitmap.buffer);
 
 		const glm::vec2 atlas_size(atlas_width, atlas_height);
-		const float font_size = (float)nominal_height;
+		const float font_size = (float)font_height;
 		characters_.insert({ c, {
 			glm::vec2(rect.x, rect.y) / atlas_size,
 			glm::vec2(rect.x + rect.w, rect.y + rect.h) / atlas_size,
@@ -121,9 +121,11 @@ Font::Font(const std::string& file_path, int atlas_width, int atlas_height) {
 	const int spread = 8;
 
 	// Find maximum font height that could fit into atlas
-	int candidate_height = (int)std::sqrt((float)(atlas_width * atlas_height) / kNumChars);
-	int candidate_area_sum = 0;
-	FT_Set_Pixel_Sizes(face, 0, candidate_height);
+	int predicted_height = (int)std::sqrt((float)(atlas_width * atlas_height) / kNumChars);
+	int A = 0; // A = sum_i(w_i * h_i)
+	int B = 0; // B = sum_i(2 * s * (w_i + h_i))
+	int C = 0; // C = sum_i(4 * s^2) - atlas_area
+	FT_Set_Pixel_Sizes(face, 0, predicted_height);
 	for (unsigned char c = kFirstChar; c < kFirstChar + kNumChars; ++c) {
 		if (FT_Load_Char(face, c, FT_LOAD_DEFAULT)) {
 			std::cerr << "[ERROR] Failed to load Glyph " << c << std::endl;
@@ -132,10 +134,16 @@ Font::Font(const std::string& file_path, int atlas_width, int atlas_height) {
 		int width = (int)face->glyph->bitmap.width;
 		int height = (int)face->glyph->bitmap.rows;
 		if (width > 0 && height > 0) {
-			candidate_area_sum += (width + 2 * spread) * (height + 2 * spread);
+			A += width * height;
+			B += width + height;
+			C += 1;
 		}
 	}
-	candidate_height = (int)std::ceil(candidate_height * std::sqrt((float)(atlas_width * atlas_height) / candidate_area_sum));
+	B = 2 * spread * B;
+	C = 4 * spread * spread * C - (atlas_width * atlas_height);
+	float scale_predicted_height;
+	math::SolveQuadraticEquation((float)A, (float)B, (float)C, &scale_predicted_height, nullptr);
+	int candidate_height = (int)(predicted_height * scale_predicted_height);
 
 	// Downscale height until font fits into atlas
 	std::vector<rect_pack::Rectangle> rects(kNumChars);
@@ -161,12 +169,12 @@ Font::Font(const std::string& file_path, int atlas_width, int atlas_height) {
 		candidate_height = (int)(candidate_height * 0.95);
 		++downscale_iters;
 	}
-	int nominal_height = candidate_height;
+	int final_height = candidate_height;
 
 	// Load glyphs
 	std::vector<FT_Glyph> glyphs(kNumChars);
 	int glyph_area_sum = 0;
-	FT_Set_Pixel_Sizes(face, 0, nominal_height);
+	FT_Set_Pixel_Sizes(face, 0, final_height);
 	for (unsigned char c = kFirstChar; c < kFirstChar + kNumChars; ++c) {
 		if (FT_Load_Char(face, c, FT_LOAD_DEFAULT)) {
 			std::cerr << "[ERROR] Failed to load Glyph " << c << std::endl;
@@ -205,7 +213,7 @@ Font::Font(const std::string& file_path, int atlas_width, int atlas_height) {
 		atlas_->SubImage(rect.x, rect.y, rect.w, rect.h, bit_glyph->bitmap.buffer);
 
 		const glm::vec2 atlas_size(atlas_width, atlas_height);
-		const float font_size = (float)nominal_height;
+		const float font_size = (float)final_height;
 		characters_.insert({ c, {
 			glm::vec2(rect.x, rect.y) / atlas_size,
 			glm::vec2(rect.x + rect.w, rect.y + rect.h) / atlas_size,

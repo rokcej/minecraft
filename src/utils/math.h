@@ -11,4 +11,6 @@ inline constexpr float kPiHalf = 1.57079632679489661923f;
 
 int RoundUpToMultipleOf4(float x);
 
+void SolveQuadraticEquation(float a, float b, float c, float* x_add, float* x_sub);
+
 } // namespace math
