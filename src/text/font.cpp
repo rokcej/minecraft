@@ -11,6 +11,7 @@
 #include <src/gl/texture.h>
 #include <src/utils/rect_pack.h>
 #include <src/utils/math.h>
+#include <src/text/sdf.h>
 
 const int Font::kFirstChar = 32;
 const int Font::kNumChars = 128 - Font::kFirstChar;
@@ -105,6 +106,8 @@ Font::Font(const std::string& file_path, int font_height) {
 	FT_Done_FreeType(library);
 }
 
+
+
 // Generate font that fits into specified atlas size
 Font::Font(const std::string& file_path, int atlas_width, int atlas_height) {
 	// TODO: Move this outside
@@ -171,11 +174,16 @@ Font::Font(const std::string& file_path, int atlas_width, int atlas_height) {
 	}
 	int final_height = candidate_height;
 
-	// Load glyphs
-	std::vector<FT_Glyph> glyphs(kNumChars);
+	// TODO: Zero-initialize texture atlas (is this even necessary?)
+	atlas_ = std::make_unique<Texture>(atlas_width, atlas_height, 1, nullptr);
+
+	// Load glyphs and copy them into atlas
 	int glyph_area_sum = 0;
 	FT_Set_Pixel_Sizes(face, 0, final_height);
-	for (unsigned char c = kFirstChar; c < kFirstChar + kNumChars; ++c) {
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // Disable 4-byte alignment restriction
+	for (const auto& rect : rects) {
+		const unsigned char c = rect.id;
+
 		if (FT_Load_Char(face, c, FT_LOAD_DEFAULT)) {
 			std::cerr << "[ERROR] Failed to load Glyph " << c << std::endl;
 			continue;
@@ -184,17 +192,26 @@ Font::Font(const std::string& file_path, int atlas_width, int atlas_height) {
 			std::cerr << "[ERROR] Failed to render Glyph " << c << std::endl;
 			continue;
 		}
-		if (FT_Get_Glyph(face->glyph, &(glyphs[c - kFirstChar]))) {
-			std::cerr << "[ERROR] Failed to get Glyph " << c << std::endl;
-			continue;
-		}
+
 		int width = (int)face->glyph->bitmap.width;
 		int height = (int)face->glyph->bitmap.rows;
 		glyph_area_sum += width * height;
-	}
 
-	// TODO: Zero-initialize texture atlas (is this even necessary?)
-	atlas_ = std::make_unique<Texture>(atlas_width, atlas_height, 1, nullptr);
+		// This is faster than creating atlas buffer on the CPU (tested using std::copy)
+		atlas_->SubImage(rect.x, rect.y, rect.w, rect.h, face->glyph->bitmap.buffer);
+
+		const glm::vec2 atlas_size(atlas_width, atlas_height);
+		const float font_size = (float)final_height;
+		characters_.insert({ c, {
+			glm::vec2(rect.x, rect.y) / atlas_size,
+			glm::vec2(rect.x + rect.w, rect.y + rect.h) / atlas_size,
+			glm::vec2(rect.w, rect.h) / font_size,
+			glm::vec2(face->glyph->bitmap_left, face->glyph->bitmap_top) / font_size,
+			(float)(face->glyph->advance.x >> 6) / font_size
+		} });
+	}
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 4); // Re-enable default alignment
+
 
 	float compression_ratio = (float)glyph_area_sum / (atlas_width * atlas_height);
 	std::cout << "[Font atlas] " <<
@@ -203,14 +220,104 @@ Font::Font(const std::string& file_path, int atlas_width, int atlas_height) {
 		"iters=" << downscale_iters << std::endl;
 
 
-	// Copy glyphs into atlas
+	FT_Done_Face(face);
+
+	FT_Done_FreeType(library);
+}
+
+
+
+// Generate font that fits into specified atlas size
+Font::Font(const std::string& file_path, int atlas_width, int atlas_height, int spread) {
+	// TODO: Move this outside
+	FT_Library library;
+	if (FT_Init_FreeType(&library)) {
+		std::cerr << "[ERROR] Failed to initialize FreeType library" << std::endl;
+	}
+
+	FT_Face face;
+	if (FT_New_Face((FT_Library)library, file_path.c_str(), 0, &face)) {
+		std::cerr << "[ERROR] Failed to load font " << file_path << std::endl;
+	}
+
+	// Find maximum font height that could fit into atlas
+	int predicted_height = (int)std::sqrt((float)(atlas_width * atlas_height) / kNumChars);
+	int A = 0; // A = sum_i(w_i * h_i)
+	int B = 0; // B = sum_i(2 * s * (w_i + h_i))
+	int C = 0; // C = sum_i(4 * s^2) - atlas_area
+	FT_Set_Pixel_Sizes(face, 0, predicted_height);
+	for (unsigned char c = kFirstChar; c < kFirstChar + kNumChars; ++c) {
+		if (FT_Load_Char(face, c, FT_LOAD_DEFAULT)) {
+			std::cerr << "[ERROR] Failed to load Glyph " << c << std::endl;
+			continue;
+		}
+		int width = (int)face->glyph->bitmap.width;
+		int height = (int)face->glyph->bitmap.rows;
+		if (width > 0 && height > 0) {
+			A += width * height;
+			B += width + height;
+			C += 1;
+		}
+	}
+	B = 2 * spread * B;
+	C = 4 * spread * spread * C - (atlas_width * atlas_height);
+	float scale_predicted_height;
+	math::SolveQuadraticEquation((float)A, (float)B, (float)C, &scale_predicted_height, nullptr);
+	int candidate_height = (int)(predicted_height * scale_predicted_height);
+
+	// Downscale height until font fits into atlas
+	std::vector<rect_pack::Rectangle> rects(kNumChars);
+	int downscale_iters = 0;
+	while (true) {
+		FT_Set_Pixel_Sizes(face, 0, candidate_height);
+		for (unsigned char c = kFirstChar; c < kFirstChar + kNumChars; ++c) {
+			if (FT_Load_Char(face, c, FT_LOAD_DEFAULT)) {
+				std::cerr << "[ERROR] Failed to load Glyph " << c << std::endl;
+				continue;
+			}
+			int width = (int)face->glyph->bitmap.width;
+			int height = (int)face->glyph->bitmap.rows;
+			if (width > 0 && height > 0) {
+				width += 2 * spread;
+				height += 2 * spread;
+			}
+			rects[c - kFirstChar] = { c, width, height, 0, 0 };
+		}
+		if (rect_pack::RowPacking(atlas_width, atlas_width, rects)) {
+			break;
+		}
+		candidate_height = (int)(candidate_height * 0.95);
+		++downscale_iters;
+	}
+	int final_height = candidate_height;
+
+	// TODO: Zero-initialize texture atlas (is this even necessary?)
+	atlas_ = std::make_unique<Texture>(atlas_width, atlas_height, 1, nullptr);
+
+	// Load glyphs and copy them into atlas
+	int glyph_area_sum = 0;
+	int render_height = 2048;
+	FT_Set_Pixel_Sizes(face, 0, render_height);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // Disable 4-byte alignment restriction
 	for (const auto& rect : rects) {
 		const unsigned char c = rect.id;
-		const FT_BitmapGlyph& bit_glyph = (FT_BitmapGlyph)glyphs[c - kFirstChar];
+
+		if (FT_Load_Char(face, c, FT_LOAD_DEFAULT)) {
+			std::cerr << "[ERROR] Failed to load Glyph " << c << std::endl;
+			continue;
+		}
+		if (FT_Render_Glyph(face->glyph, FT_RENDER_MODE_NORMAL)) {
+			std::cerr << "[ERROR] Failed to render Glyph " << c << std::endl;
+			continue;
+		}
+
+		std::unique_ptr<uint8_t[]> sdf_data(new uint8_t[rect.w * rect.h]);
+		sdf::GenerateSDF(spread, face->glyph->bitmap.buffer, face->glyph->bitmap.width, face->glyph->bitmap.rows, sdf_data.get(), rect.w, rect.h);
+
+		glyph_area_sum += rect.w * rect.h;
 
 		// This is faster than creating atlas buffer on the CPU (tested using std::copy)
-		atlas_->SubImage(rect.x, rect.y, rect.w, rect.h, bit_glyph->bitmap.buffer);
+		atlas_->SubImage(rect.x, rect.y, rect.w, rect.h, sdf_data.get());
 
 		const glm::vec2 atlas_size(atlas_width, atlas_height);
 		const float font_size = (float)final_height;
@@ -218,13 +325,17 @@ Font::Font(const std::string& file_path, int atlas_width, int atlas_height) {
 			glm::vec2(rect.x, rect.y) / atlas_size,
 			glm::vec2(rect.x + rect.w, rect.y + rect.h) / atlas_size,
 			glm::vec2(rect.w, rect.h) / font_size,
-			glm::vec2(bit_glyph->left, bit_glyph->top) / font_size,
-			(float)(bit_glyph->root.advance.x >> 16) / font_size
+			glm::vec2(face->glyph->bitmap_left, face->glyph->bitmap_top) / (float)render_height,
+			(float)(face->glyph->advance.x >> 6) / (float)render_height
 		} });
-
-		FT_Done_Glyph(glyphs[c - kFirstChar]);
 	}
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 4); // Re-enable default alignment
+
+	float compression_ratio = (float)glyph_area_sum / (atlas_width * atlas_height);
+	std::cout << "[Font atlas] " <<
+		"resolution=" << atlas_width << "x" << atlas_height << ", " <<
+		"ratio=" << compression_ratio << ", " <<
+		"iters=" << downscale_iters << std::endl;
 
 
 	FT_Done_Face(face);

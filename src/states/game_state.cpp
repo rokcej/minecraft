@@ -30,7 +30,7 @@ GameState::GameState(Window* window) : State(window) {
 
 	// Text
 	text_shader_ = std::make_unique<Shader>("data/shaders/text.vert", "data/shaders/text_sdf.frag");
-	font_ = std::make_unique<Font>("data/fonts/Roboto-Regular.ttf", 1024, 1024);
+	font_ = std::make_unique<Font>("data/fonts/Roboto-Regular.ttf", 1024, 1024, 8);
 	font_->GetAtlas()->SavePNG("atlas.png");
 	fps_text_ = std::make_unique<Text>("0 FPS", 24, font_.get());
 	debug_text_ = std::make_unique<Text>("", 24, font_.get());

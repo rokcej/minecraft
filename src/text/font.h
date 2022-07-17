@@ -20,6 +20,7 @@ class Font {
 public:
 	Font(const std::string& file_path, int nominal_height);
 	Font(const std::string& file_path, int atlas_width, int atlas_height);
+	Font(const std::string& file_path, int atlas_width, int atlas_height, int spread);
 	~Font();
 
 	const FontCharacter& GetCharacter(char c) const;

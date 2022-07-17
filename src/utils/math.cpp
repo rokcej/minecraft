@@ -19,4 +19,8 @@ void SolveQuadraticEquation(float a, float b, float c, float* x_add, float* x_su
 	}
 }
 
+float MapRange(float val, float in_min, float in_max, float out_min, float out_max) {
+	return (val - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
 } // namespace math

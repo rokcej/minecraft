@@ -35,6 +35,7 @@ cmake --build build
 * How to read in a file in C++ - https://insanecoding.blogspot.com/2011/11/how-to-read-in-file-in-c.html
 * Optimized Spatial Hashing for Collision Detection of Deformable Objects - http://www.beosil.com/download/CollisionDetectionHashing_VMV03.pdf
 * Improved Alpha-Tested Magnification for Vector Textures and Special Effects - https://steamcdn-a.akamaihd.net/apps/valve/2007/SIGGRAPH2007_AlphaTestedMagnification.pdf
+* Distance Transforms of Sampled Functions - http://cs.brown.edu/people/pfelzens/papers/dt-final.pdf
 
 
 ## Similar projects
