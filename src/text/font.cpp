@@ -311,10 +311,11 @@ Font::Font(const std::string& file_path, int atlas_width, int atlas_height, int 
 			continue;
 		}
 
-		std::unique_ptr<uint8_t[]> sdf_data(new uint8_t[rect.w * rect.h]);
-		sdf::GenerateSDF(spread, face->glyph->bitmap.buffer, face->glyph->bitmap.width, face->glyph->bitmap.rows, sdf_data.get(), rect.w, rect.h);
-
 		glyph_area_sum += rect.w * rect.h;
+
+		std::unique_ptr<uint8_t[]> sdf_data(new uint8_t[rect.w * rect.h]);
+		const FT_Bitmap& bitmap = face->glyph->bitmap; // Alias for readability
+		sdf::GenerateSDF(spread, bitmap.buffer, bitmap.width, bitmap.rows, sdf_data.get(), rect.w, rect.h);
 
 		// This is faster than creating atlas buffer on the CPU (tested using std::copy)
 		atlas_->SubImage(rect.x, rect.y, rect.w, rect.h, sdf_data.get());
@@ -342,6 +343,8 @@ Font::Font(const std::string& file_path, int atlas_width, int atlas_height, int 
 
 	FT_Done_FreeType(library);
 }
+
+
 
 Font::~Font() {
 
